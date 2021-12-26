@@ -79,12 +79,16 @@ defmodule MidiCleanerTest do
     cc_val0 = event(bytes: [176, 20, 0], symbol: :controller)
     cc_val1 = event(bytes: [176, 20, 1], symbol: :controller)
 
-    unchanging_track = %Track{events: [cc_val0, cc_val0, cc_val0]}
-    changing_track = %Track{events: [cc_val0, cc_val1, cc_val0]}
-    empty_track = %Track{events: []}
+    note_on = event(bytes: [144, 71, 26], symbol: :on)
+    note_off = event(bytes: [128, 72, 0], symbol: :off)
+    text_event = event(bytes: "Violoncello", symbol: :seq_name)
+
+    unchanging_track = %Track{events: [cc_val0, cc_val0, cc_val0, note_on, note_off, text_event]}
+    changing_track = %Track{events: [cc_val0, cc_val1, cc_val0, note_on, note_off, text_event]}
+    track_with_no_cc = %Track{events: [note_on, note_off, text_event]}
 
     orig_sequence = sequence(tracks: [unchanging_track, changing_track])
-    clean_sequence = sequence(tracks: [empty_track, changing_track])
+    clean_sequence = sequence(tracks: [track_with_no_cc, changing_track])
 
     assert MidiCleaner.remove_unchanging_cc_val0(orig_sequence) == clean_sequence
   end
