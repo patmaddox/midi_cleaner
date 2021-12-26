@@ -1,0 +1,3 @@
+%{
+  "midifile": {:git, "https://github.com/jimm/elixir-midifile.git", "7eac20c6da3b84804987a5ec0eb3c6f40bce3a8c", [ref: "7eac20c"]},
+}
