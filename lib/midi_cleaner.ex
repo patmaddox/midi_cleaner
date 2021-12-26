@@ -1,12 +1,20 @@
 defmodule MidiCleaner do
   alias Midifile.{Event, Sequence, Track}
 
+  defmodule Error do
+    defexception message: "A MidiCleaner error has occurred."
+  end
+
   def remove_program_changes(%Sequence{} = sequence) do
     %{sequence | tracks: remove_track_program_changes(sequence.tracks)}
   end
 
-  def set_midi_channel(%Sequence{} = sequence, channel) do
+  def set_midi_channel(%Sequence{} = sequence, channel) when channel >= 0 and channel <= 15 do
     %{sequence | tracks: set_track_midi_channel(sequence.tracks, channel)}
+  end
+
+  def set_midi_channel(_sequence, channel) do
+    raise Error, "Bad MIDI channel: #{channel}"
   end
 
   defp remove_track_program_changes(tracks) when is_list(tracks),

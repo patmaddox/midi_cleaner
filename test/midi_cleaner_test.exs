@@ -65,6 +65,14 @@ defmodule MidiCleanerTest do
 
     assert MidiCleaner.set_midi_channel(multi_channel_sequence, 0) == channel_0_sequence
     assert MidiCleaner.set_midi_channel(multi_channel_sequence, 15) == channel_15_sequence
+
+    assert_raise MidiCleaner.Error, ~r/Bad MIDI channel: -1/, fn ->
+      MidiCleaner.set_midi_channel(multi_channel_sequence, -1)
+    end
+
+    assert_raise MidiCleaner.Error, ~r/Bad MIDI channel: 16/, fn ->
+      MidiCleaner.set_midi_channel(multi_channel_sequence, 16)
+    end
   end
 
   defp conductor_track() do
