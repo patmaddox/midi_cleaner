@@ -1,21 +1,7 @@
 # MidiCleaner
 
-**TODO: Add description**
+## TODO
 
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `midi_cleaner` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:midi_cleaner, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/midi_cleaner>.
-
+* Remove Program Change
+* Remove CCs where all values are 0
+* Set MIDI channel to 1
