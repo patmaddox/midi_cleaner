@@ -5,8 +5,8 @@ defmodule MidiCleaner do
     %{sequence | tracks: remove_track_program_changes(sequence.tracks)}
   end
 
-  def set_midi_channel(%Sequence{} = sequence) do
-    %{sequence | tracks: set_track_midi_channel(sequence.tracks)}
+  def set_midi_channel(%Sequence{} = sequence, channel) do
+    %{sequence | tracks: set_track_midi_channel(sequence.tracks, channel)}
   end
 
   defp remove_track_program_changes(tracks) when is_list(tracks),
@@ -21,21 +21,21 @@ defmodule MidiCleaner do
   defp event_is_program_change?(%Event{symbol: :program}), do: true
   defp event_is_program_change?(%Event{}), do: false
 
-  defp set_track_midi_channel(tracks) when is_list(tracks),
-    do: Enum.map(tracks, &set_track_midi_channel/1)
+  defp set_track_midi_channel(tracks, channel) when is_list(tracks),
+    do: Enum.map(tracks, &set_track_midi_channel(&1, channel))
 
-  defp set_track_midi_channel(%Track{} = track) do
-    %{track | events: set_event_midi_channel(track.events)}
+  defp set_track_midi_channel(%Track{} = track, channel) do
+    %{track | events: set_event_midi_channel(track.events, channel)}
   end
 
-  defp set_event_midi_channel(events) when is_list(events),
-    do: Enum.map(events, &set_event_midi_channel/1)
+  defp set_event_midi_channel(events, channel) when is_list(events),
+    do: Enum.map(events, &set_event_midi_channel(&1, channel))
 
-  defp set_event_midi_channel(%Event{} = event) do
+  defp set_event_midi_channel(%Event{} = event, new_channel) do
     if Event.channel?(event) do
       [first | rest] = event.bytes
-      channel = Event.channel(event)
-      first = first - channel
+      orig_channel = Event.channel(event)
+      first = first - orig_channel + new_channel
       struct(event, bytes: [first | rest])
     else
       event

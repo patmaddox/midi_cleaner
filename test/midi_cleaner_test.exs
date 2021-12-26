@@ -22,7 +22,7 @@ defmodule MidiCleanerTest do
     assert MidiCleaner.remove_program_changes(sequence_with_pc) == sequence_without_pc
   end
 
-  test "set_midi_channel(sequence)" do
+  test "set_midi_channel(sequence, channel)" do
     text_event = event(bytes: "Violoncello", symbol: :seq_name)
     channel_0_controller = event(bytes: [176, 20, 0], symbol: :controller)
     channel_15_controller = event(bytes: [191, 20, 0], symbol: :controller)
@@ -39,7 +39,7 @@ defmodule MidiCleanerTest do
       ]
     }
 
-    single_channel_track = %Track{
+    channel_0_track = %Track{
       events: [
         text_event,
         channel_0_controller,
@@ -49,10 +49,22 @@ defmodule MidiCleanerTest do
       ]
     }
 
-    multi_channel_sequence = sequence(tracks: [multi_channel_track, multi_channel_track])
-    single_channel_sequence = sequence(tracks: [single_channel_track, single_channel_track])
+    channel_15_track = %Track{
+      events: [
+        text_event,
+        channel_15_controller,
+        channel_15_controller,
+        channel_15_note,
+        channel_15_note
+      ]
+    }
 
-    assert MidiCleaner.set_midi_channel(multi_channel_sequence) == single_channel_sequence
+    multi_channel_sequence = sequence(tracks: [multi_channel_track, multi_channel_track])
+    channel_0_sequence = sequence(tracks: [channel_0_track, channel_0_track])
+    channel_15_sequence = sequence(tracks: [channel_15_track, channel_15_track])
+
+    assert MidiCleaner.set_midi_channel(multi_channel_sequence, 0) == channel_0_sequence
+    assert MidiCleaner.set_midi_channel(multi_channel_sequence, 15) == channel_15_sequence
   end
 
   defp conductor_track() do
