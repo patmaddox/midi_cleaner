@@ -17,6 +17,10 @@ defmodule MidiCleaner do
     raise Error, "Bad MIDI channel: #{channel}"
   end
 
+  def remove_unchanging_cc_val0(%Sequence{} = sequence) do
+    %{sequence | tracks: remove_track_unchanging_cc_val0(sequence.tracks)}
+  end
+
   defp remove_track_program_changes(tracks) when is_list(tracks),
     do: Enum.map(tracks, &remove_track_program_changes/1)
 
@@ -48,5 +52,22 @@ defmodule MidiCleaner do
     else
       event
     end
+  end
+
+  defp remove_track_unchanging_cc_val0(tracks) when is_list(tracks),
+    do: Enum.map(tracks, &remove_track_unchanging_cc_val0/1)
+
+  defp remove_track_unchanging_cc_val0(%Track{} = track) do
+    controls_to_keep =
+      track.events
+      |> Enum.filter(fn %Event{bytes: [_, _, val]} -> val > 0 end)
+      |> Enum.map(fn %Event{bytes: [cc, _, _]} -> cc end)
+      |> MapSet.new()
+
+    events =
+      track.events
+      |> Enum.filter(fn %Event{bytes: [cc, _, _]} -> MapSet.member?(controls_to_keep, cc) end)
+
+    %{track | events: events}
   end
 end

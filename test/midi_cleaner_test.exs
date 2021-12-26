@@ -75,6 +75,20 @@ defmodule MidiCleanerTest do
     end
   end
 
+  test "remove_unchanging_cc_val0(sequence)" do
+    cc_val0 = event(bytes: [176, 20, 0], symbol: :controller)
+    cc_val1 = event(bytes: [176, 20, 1], symbol: :controller)
+
+    unchanging_track = %Track{events: [cc_val0, cc_val0, cc_val0]}
+    changing_track = %Track{events: [cc_val0, cc_val1, cc_val0]}
+    empty_track = %Track{events: []}
+
+    orig_sequence = sequence(tracks: [unchanging_track, changing_track])
+    clean_sequence = sequence(tracks: [empty_track, changing_track])
+
+    assert MidiCleaner.remove_unchanging_cc_val0(orig_sequence) == clean_sequence
+  end
+
   defp conductor_track() do
     %Track{
       events: [
