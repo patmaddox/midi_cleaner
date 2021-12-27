@@ -1,7 +1,10 @@
 defmodule MidiCleaner do
   @callback read_file(String.t()) :: :ok
-  @callback remove_program_changes(Midifile.Sequence.t()) :: :ok
   @callback write_file(Midifile.Sequence.t(), String.t()) :: :ok
+
+  @callback remove_program_changes(Midifile.Sequence.t()) :: :ok
+  @callback remove_unchanging_cc_val0(Midifile.Sequence.t()) :: :ok
+  @callback set_midi_channel(Midifile.Sequence.t(), Integer.t()) :: :ok
 
   alias MidiCleaner.{RemoveProgramChanges, RemoveUnchangingCcVal0, SetMidiChannel}
 
