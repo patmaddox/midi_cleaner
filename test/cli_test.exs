@@ -9,109 +9,89 @@ defmodule MidiCleaner.CLITest do
   setup :verify_on_exit!
 
   test "no args" do
-    assert CLI.main([]) == nil
-  end
-
-  test "example.mid (file arg)" do
     MockRunner
-    |> expect(:run, fn commands ->
-      assert commands == [[{&MidiCleaner.read_file/1, ["example.mid"]}]]
+    |> expect(:run, fn config ->
+      assert config == %{
+               file_list: [],
+               output: nil,
+               remove_program_changes: false,
+               remove_unchanging_cc_val0: false,
+               set_midi_channel: nil
+             }
     end)
 
-    CLI.main(["example.mid"])
+    CLI.main([])
   end
 
-  test "input folder" do
+  test "file list" do
     MockRunner
-    |> expect(:run, fn commands ->
-      assert commands == [
-               [{&MidiCleaner.read_file/1, ["test/fixtures/midi/drums.mid"]}],
-               [{&MidiCleaner.read_file/1, ["test/fixtures/midi/example.mid"]}]
-             ]
+    |> expect(:run, fn config ->
+      assert config.file_list == ["example.mid", "midi/example.mid", "midi/examples"]
     end)
 
-    CLI.main(["test/fixtures"])
+    CLI.main(["example.mid", "midi/example.mid", "midi/examples"])
   end
 
-  test "multiple files" do
+  test "--output=clean" do
     MockRunner
-    |> expect(:run, fn commands ->
-      assert commands == [
-               [{&MidiCleaner.read_file/1, ["example1.mid"]}],
-               [{&MidiCleaner.read_file/1, ["example2.mid"]}]
-             ]
+    |> expect(:run, fn config ->
+      assert config.output == "clean"
     end)
 
-    CLI.main(["example1.mid", "example2.mid"])
+    CLI.main(["--output=clean"])
+  end
+
+  test "--remove-program-changes" do
+    MockRunner
+    |> expect(:run, fn config ->
+      assert config.remove_program_changes
+    end)
+
+    CLI.main(["--remove-program-changes"])
+  end
+
+  test "--remove-unchanging-cc-val0" do
+    MockRunner
+    |> expect(:run, fn config ->
+      assert config.remove_unchanging_cc_val0
+    end)
+
+    CLI.main(["--remove-unchanging-cc-val0"])
+  end
+
+  test "--set-midi-channel=0" do
+    MockRunner
+    |> expect(:run, fn config ->
+      assert config.set_midi_channel == 0
+    end)
+
+    CLI.main(["--set-midi-channel=0"])
   end
 
   test "all args" do
     MockRunner
-    |> expect(:run, fn commands ->
-      assert commands == [
-               [{&File.mkdir_p!/1, ["clean/midi"]}],
-               [
-                 {&MidiCleaner.read_file/1, ["midi/example.mid"]},
-                 &MidiCleaner.remove_program_changes/1,
-                 &MidiCleaner.remove_unchanging_cc_val0/1,
-                 {&MidiCleaner.set_midi_channel/2, [1]},
-                 {&MidiCleaner.write_file/2, ["clean/midi/example.mid"]}
-               ]
-             ]
-    end)
-
-    CLI.main(["--pc", "--cc0", "--ch=1", "--o=clean", "midi/example.mid"])
-  end
-
-  test "all args (multiple files)" do
-    MockRunner
-    |> expect(:run, fn commands ->
-      assert commands == [
-               [{&File.mkdir_p!/1, ["clean/midi"]}],
-               [
-                 {&MidiCleaner.read_file/1, ["midi/example1.mid"]},
-                 &MidiCleaner.remove_program_changes/1,
-                 &MidiCleaner.remove_unchanging_cc_val0/1,
-                 {&MidiCleaner.set_midi_channel/2, [1]},
-                 {&MidiCleaner.write_file/2, ["clean/midi/example1.mid"]}
+    |> expect(:run, fn config ->
+      assert config == %{
+               file_list: [
+                 "midi/example1.mid",
+                 "orig/example2.mid",
+                 "midi/examples"
                ],
-               [{&File.mkdir_p!/1, ["clean/orig"]}],
-               [
-                 {&MidiCleaner.read_file/1, ["orig/example2.mid"]},
-                 &MidiCleaner.remove_program_changes/1,
-                 &MidiCleaner.remove_unchanging_cc_val0/1,
-                 {&MidiCleaner.set_midi_channel/2, [1]},
-                 {&MidiCleaner.write_file/2, ["clean/orig/example2.mid"]}
-               ]
-             ]
+               output: "clean",
+               remove_program_changes: true,
+               remove_unchanging_cc_val0: true,
+               set_midi_channel: 0
+             }
     end)
 
-    CLI.main(["--pc", "--cc0", "--ch=1", "--o=clean", "midi/example1.mid", "orig/example2.mid"])
-  end
-
-  test "all args (target dir)" do
-    MockRunner
-    |> expect(:run, fn commands ->
-      assert commands == [
-               [{&File.mkdir_p!/1, ["clean/midi"]}],
-               [
-                 {&MidiCleaner.read_file/1, ["test/fixtures/midi/drums.mid"]},
-                 &MidiCleaner.remove_program_changes/1,
-                 &MidiCleaner.remove_unchanging_cc_val0/1,
-                 {&MidiCleaner.set_midi_channel/2, [1]},
-                 {&MidiCleaner.write_file/2, ["clean/midi/drums.mid"]}
-               ],
-               [{&File.mkdir_p!/1, ["clean/midi"]}],
-               [
-                 {&MidiCleaner.read_file/1, ["test/fixtures/midi/example.mid"]},
-                 &MidiCleaner.remove_program_changes/1,
-                 &MidiCleaner.remove_unchanging_cc_val0/1,
-                 {&MidiCleaner.set_midi_channel/2, [1]},
-                 {&MidiCleaner.write_file/2, ["clean/midi/example.mid"]}
-               ]
-             ]
-    end)
-
-    CLI.main(["--pc", "--cc0", "--ch=1", "--o=clean", "test/fixtures/midi"])
+    CLI.main([
+      "--output=clean",
+      "--remove-program-changes",
+      "--remove-unchanging-cc-val0",
+      "--set-midi-channel=0",
+      "midi/example1.mid",
+      "orig/example2.mid",
+      "midi/examples"
+    ])
   end
 end
