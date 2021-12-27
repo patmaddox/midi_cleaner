@@ -79,8 +79,8 @@ defmodule MidiCleanerTest do
     cc_val0 = event(bytes: [176, 20, 0], symbol: :controller)
     cc_val1 = event(bytes: [177, 20, 1], symbol: :controller)
 
-    note_on = event(bytes: [144, 71, 26], symbol: :on)
-    note_off = event(bytes: [128, 72, 0], symbol: :off)
+    note_on = event(bytes: [144, 20, 26], symbol: :on)
+    note_off = event(bytes: [128, 20, 0], symbol: :off)
     text_event = event(bytes: "Violoncello", symbol: :seq_name)
 
     unchanging_track = %Track{events: [cc_val0, cc_val0, cc_val0, note_on, note_off, text_event]}

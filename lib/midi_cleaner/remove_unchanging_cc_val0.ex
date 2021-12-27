@@ -21,7 +21,7 @@ defmodule MidiCleaner.RemoveUnchangingCcVal0 do
     |> MapSet.new()
   end
 
-  defp keep_control?(%Event{bytes: [_, _, val]}) when val > 0, do: true
+  defp keep_control?(%Event{symbol: :controller, bytes: [_, _, val]}) when val > 0, do: true
   defp keep_control?(_), do: false
 
   defp events_to_keep(events, controls_to_keep),
