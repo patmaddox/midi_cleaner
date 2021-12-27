@@ -24,3 +24,6 @@ midi_cleaner-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# escript builds
+/escript
