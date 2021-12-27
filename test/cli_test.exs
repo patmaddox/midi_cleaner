@@ -38,7 +38,7 @@ defmodule MidiCleaner.CLITest do
   test "--ch=0" do
     MockRunner
     |> expect(:run, fn commands ->
-      assert commands == [{&MidiCleaner.set_midi_channel/2, 0}]
+      assert commands == [{&MidiCleaner.set_midi_channel/2, [0]}]
     end)
 
     CLI.main(["--ch=0"])
@@ -50,7 +50,7 @@ defmodule MidiCleaner.CLITest do
       assert commands == [
                &MidiCleaner.remove_program_changes/1,
                &MidiCleaner.remove_unchanging_cc_val0/1,
-               {&MidiCleaner.set_midi_channel/2, 1}
+               {&MidiCleaner.set_midi_channel/2, [1]}
              ]
     end)
 

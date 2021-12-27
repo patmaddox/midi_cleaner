@@ -22,7 +22,7 @@ defmodule MidiCleaner.CLI do
     do: append_command(opts, :cc0, &MidiCleaner.remove_unchanging_cc_val0/1)
 
   defp setup_commands({%{ch: channel} = opts}),
-    do: append_command(opts, :ch, {&MidiCleaner.set_midi_channel/2, channel})
+    do: append_command(opts, :ch, {&MidiCleaner.set_midi_channel/2, [channel]})
 
   defp append_command(opts, key, command) do
     remaining_opts = Map.delete(opts, key)
