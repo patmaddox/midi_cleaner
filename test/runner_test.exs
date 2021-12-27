@@ -84,6 +84,51 @@ defmodule MidiCleaner.RunnerTest do
       assert :ok == Runner.run(config)
     end
 
+    test "multiple files" do
+      MockMidiCleaner
+      |> expect_read_file("1.mid", {:sequence_after_read_file, "1.mid"})
+      |> expect_remove_program_changes(
+        {:sequence_after_read_file, "1.mid"},
+        {:sequence_after_remove_program_changes, "1.mid"}
+      )
+      |> expect_remove_unchanging_cc_val0(
+        {:sequence_after_remove_program_changes, "1.mid"},
+        {:sequence_after_remove_unchanging_cc_val0, "1.mid"}
+      )
+      |> expect_set_midi_channel(
+        {:sequence_after_remove_unchanging_cc_val0, "1.mid"},
+        0,
+        {:sequence_after_set_midi_channel, "1.mid"}
+      )
+      |> expect_write_file(
+        {:sequence_after_set_midi_channel, "1.mid"},
+        "export/clean/1.mid",
+        {:after_write_file, "1.mid"}
+      )
+      |> expect_read_file("2.mid", {:sequence_after_read_file, "2.mid"})
+      |> expect_remove_program_changes(
+        {:sequence_after_read_file, "2.mid"},
+        {:sequence_after_remove_program_changes, "2.mid"}
+      )
+      |> expect_remove_unchanging_cc_val0(
+        {:sequence_after_remove_program_changes, "2.mid"},
+        {:sequence_after_remove_unchanging_cc_val0, "2.mid"}
+      )
+      |> expect_set_midi_channel(
+        {:sequence_after_remove_unchanging_cc_val0, "2.mid"},
+        0,
+        {:sequence_after_set_midi_channel, "2.mid"}
+      )
+      |> expect_write_file(
+        {:sequence_after_set_midi_channel, "2.mid"},
+        "export/clean/2.mid",
+        {:after_write_file, "2.mid"}
+      )
+
+      config = config(file_list: ["1.mid", "2.mid"])
+      assert :ok == Runner.run(config)
+    end
+
     @tag :skip
     test "full config" do
       assert :ok == Runner.run(config())
