@@ -8,7 +8,7 @@ defmodule MidiCleaner.CLI do
 
   defp parse_options(args) do
     {options, filenames} =
-      OptionParser.parse!(args, strict: [pc: :boolean, cc0: :boolean, ch: :integer])
+      OptionParser.parse!(args, strict: [pc: :boolean, cc0: :boolean, ch: :integer, o: :string])
 
     {Map.new(options), filenames}
   end
@@ -28,6 +28,9 @@ defmodule MidiCleaner.CLI do
 
   defp setup_commands(%{ch: channel} = opts),
     do: append_command(opts, :ch, {&MidiCleaner.set_midi_channel/2, [channel]})
+
+  defp setup_commands(%{o: outfile} = opts),
+    do: append_command(opts, :o, {&MidiCleaner.write_file/2, [outfile]})
 
   defp append_command(opts, command), do: [command | setup_commands(opts)]
 

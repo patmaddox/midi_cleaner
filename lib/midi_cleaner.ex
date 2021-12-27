@@ -13,4 +13,6 @@ defmodule MidiCleaner do
   def set_midi_channel(sequence, channel), do: SetMidiChannel.set_midi_channel(sequence, channel)
 
   def read_file(filename), do: Midifile.read(filename)
+
+  def write_file(sequence, filename), do: Midifile.write(sequence, filename)
 end
