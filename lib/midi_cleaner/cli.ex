@@ -1,18 +1,10 @@
 defmodule MidiCleaner.CLI do
+  alias MidiCleaner.Config
+
   def main(args) do
-    default_config()
+    %Config{}
     |> parse_options(args)
     |> run()
-  end
-
-  defp default_config do
-    %{
-      file_list: [],
-      output: nil,
-      remove_program_changes: false,
-      remove_unchanging_cc_val0: false,
-      set_midi_channel: nil
-    }
   end
 
   defp parse_options(config, args) do

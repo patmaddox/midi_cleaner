@@ -4,14 +4,14 @@ defmodule MidiCleaner.CLITest do
 
   import Mox
 
-  alias MidiCleaner.{CLI, MockRunner}
+  alias MidiCleaner.{CLI, Config, MockRunner}
 
   setup :verify_on_exit!
 
   test "no args" do
     MockRunner
     |> expect(:run, fn config ->
-      assert config == %{
+      assert config == %Config{
                file_list: [],
                output: nil,
                remove_program_changes: false,
@@ -71,7 +71,7 @@ defmodule MidiCleaner.CLITest do
   test "all args" do
     MockRunner
     |> expect(:run, fn config ->
-      assert config == %{
+      assert config == %Config{
                file_list: [
                  "midi/example1.mid",
                  "orig/example2.mid",
