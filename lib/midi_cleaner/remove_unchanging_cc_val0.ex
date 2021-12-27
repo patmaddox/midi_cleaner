@@ -17,7 +17,7 @@ defmodule MidiCleaner.RemoveUnchangingCcVal0 do
   defp controls_to_keep(events) do
     events
     |> Stream.filter(&keep_control?/1)
-    |> Stream.map(fn %Event{bytes: [_, cc, _]} -> cc end)
+    |> Stream.map(&cc/1)
     |> MapSet.new()
   end
 
@@ -27,8 +27,10 @@ defmodule MidiCleaner.RemoveUnchangingCcVal0 do
   defp events_to_keep(events, controls_to_keep),
     do: Enum.filter(events, &keep_event?(&1, controls_to_keep))
 
-  defp keep_event?(%Event{bytes: [_, cc, _], symbol: :controller}, controls_to_keep),
-    do: MapSet.member?(controls_to_keep, cc)
+  defp keep_event?(%Event{symbol: :controller} = event, controls_to_keep),
+    do: MapSet.member?(controls_to_keep, cc(event))
 
   defp keep_event?(_, _), do: true
+
+  defp cc(%Event{bytes: [_, cc, _]}), do: cc
 end
