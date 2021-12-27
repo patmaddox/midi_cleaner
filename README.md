@@ -2,4 +2,5 @@
 
 ## TODO
 
-* Remove CCs where all values are 0
+* Handle multiple files
+* ...in parallel
