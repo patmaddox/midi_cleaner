@@ -1,4 +1,8 @@
 defmodule MidiCleaner do
+  @callback read_file(String.t()) :: :ok
+  @callback remove_program_changes(Midifile.Sequence.t()) :: :ok
+  @callback write_file(Midifile.Sequence.t(), String.t()) :: :ok
+
   alias MidiCleaner.{RemoveProgramChanges, RemoveUnchangingCcVal0, SetMidiChannel}
 
   defmodule Error do

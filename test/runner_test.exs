@@ -2,13 +2,39 @@ defmodule MidiCleaner.RunnerTest do
   use ExUnit.Case
   doctest MidiCleaner.Runner
 
-  alias MidiCleaner.{Config, Runner}
+  import Mox
+
+  alias MidiCleaner.{Config, Runner, MockMidiCleaner}
+
+  setup :verify_on_exit!
 
   describe "run(config)" do
     test "errors" do
-      assert {:error, _} = Runner.run(config(file_list: []))
+      config = config(file_list: [])
+      assert {:error, _} = Runner.run(config)
     end
 
+    test "one file, one command" do
+      MockMidiCleaner
+      |> expect(:read_file, fn filename ->
+        assert filename == "example.mid"
+        :sequence_after_read_file
+      end)
+      |> expect(:remove_program_changes, fn sequence ->
+        assert sequence == :sequence_after_read_file
+        :sequence_after_remove_program_changes
+      end)
+      |> expect(:write_file, fn sequence, outfile ->
+        assert sequence == :sequence_after_remove_program_changes
+        assert outfile == "export/clean/example.mid"
+        :after_write_file
+      end)
+
+      config = config(file_list: ["example.mid"])
+      assert :ok == Runner.run(config)
+    end
+
+    @tag :skip
     test "full config" do
       assert :ok == Runner.run(config())
     end
