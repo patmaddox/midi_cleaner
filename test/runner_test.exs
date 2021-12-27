@@ -2,74 +2,43 @@ defmodule MidiCleaner.RunnerTest do
   use ExUnit.Case
   doctest MidiCleaner.Runner
 
-  alias MidiCleaner.Runner
+  alias MidiCleaner.{Config, Runner}
 
   describe "run()" do
-    test "no args" do
-      assert Runner.run([]) == []
+    test "no file list" do
+      config = config(file_list: [])
+      assert Runner.run(config) == {:error, [:no_file_list]}
     end
 
-    test "one command" do
-      commands = [&__MODULE__.foo/0]
-      assert Runner.run(commands) == "foo"
+    test "no output" do
+      config = config(output: nil)
+      assert Runner.run(config) == {:error, [:no_output]}
     end
 
-    test "two commands" do
-      commands = [
-        &__MODULE__.foo/0,
-        &String.upcase/1
-      ]
+    test "no commands" do
+      config =
+        config(
+          remove_program_changes: false,
+          remove_unchanging_cc_val0: false,
+          set_midi_channel: nil
+        )
 
-      assert Runner.run(commands) == "FOO"
+      assert Runner.run(config) == {:error, [:no_commands]}
     end
 
-    test "three commands" do
-      commands = [
-        &__MODULE__.foo/0,
-        &String.upcase/1,
-        &String.reverse/1
-      ]
-
-      assert Runner.run(commands) == "OOF"
-    end
-
-    test "one command with arg" do
-      commands = [{&String.upcase/1, ["foo"]}]
-      assert Runner.run(commands) == "FOO"
-    end
-
-    test "two commands with args" do
-      commands = [
-        {&String.upcase/1, ["foo"]},
-        {&String.replace/3, ["OO", "BAR"]}
-      ]
-
-      assert Runner.run(commands) == "FBAR"
-    end
-
-    test "three commands with args" do
-      commands = [
-        {&String.upcase/1, ["foo"]},
-        {&String.replace/3, ["OO", "BAR"]},
-        {&String.slice/2, [0..1]}
-      ]
-
-      assert Runner.run(commands) == "FB"
-    end
-
-    test "batch commands" do
-      commands = [
-        [&__MODULE__.foo/0],
-        [
-          {&String.upcase/1, ["foo"]},
-          {&String.replace/3, ["OO", "BAR"]},
-          {&String.slice/2, [0..1]}
-        ]
-      ]
-
-      assert Runner.run(commands) == ["foo", "FB"]
+    test "full config" do
+      assert Runner.run(config()) == :ok
     end
   end
 
-  def foo, do: "foo"
+  def config(overrides \\ []) do
+    %Config{
+      file_list: ["example.mid", "files/example.mid", "example/midi"],
+      output: "export/clean",
+      remove_program_changes: true,
+      remove_unchanging_cc_val0: true,
+      set_midi_channel: 0
+    }
+    |> Map.merge(Map.new(overrides))
+  end
 end

@@ -1,17 +1,36 @@
 defmodule MidiCleaner.Runner do
-  @callback run(List.t()) :: :ok
+  @callback run(Map.t()) :: :ok
 
-  def run([]), do: []
-  def run([command]), do: run_command(command)
-  def run([first | _rest] = commands) when is_list(first), do: Enum.map(commands, &run(&1))
-  def run([command | rest]), do: run_command(command) |> run(rest)
+  def run(config) do
+    with [] <- validate(config) do
+      :ok
+    else
+      errors -> {:error, errors}
+    end
+  end
 
-  defp run(val, [command]), do: run_command(command, [val])
-  defp run(val, [command | rest]), do: run_command(command, [val]) |> run(rest)
+  defp validate(config) do
+    []
+    |> validate_file_list(config)
+    |> validate_output(config)
+    |> validate_commands(config)
+  end
 
-  defp run_command(command, args) when is_function(command), do: apply(command, args)
-  defp run_command({command, args}, preargs), do: run_command(command, preargs ++ args)
+  defp validate_file_list(errors, %{file_list: file_list}) when length(file_list) == 0,
+    do: [:no_file_list | errors]
 
-  defp run_command(command) when is_function(command), do: run_command(command, [])
-  defp run_command({command, args}), do: run_command(command, args)
+  defp validate_file_list(errors, _), do: errors
+
+  defp validate_output(errors, %{output: output}) when is_nil(output), do: [:no_output | errors]
+  defp validate_output(errors, _), do: errors
+
+  defp validate_commands(errors, %{
+         remove_program_changes: pc,
+         remove_unchanging_cc_val0: cc0,
+         set_midi_channel: ch
+       })
+       when pc or cc0 or is_integer(ch),
+       do: errors
+
+  defp validate_commands(errors, _), do: [:no_commands | errors]
 end
