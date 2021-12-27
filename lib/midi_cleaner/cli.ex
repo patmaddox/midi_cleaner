@@ -1,81 +1,112 @@
 defmodule MidiCleaner.CLI do
+  def main(args) when args == [], do: nil
+
   def main(args) do
-    args
-    |> parse_options()
-    |> setup_commands()
+    %{}
+    |> parse_options(args)
+    |> build_file_list()
+    |> build_command_list()
+    |> build_all_commands_list()
     |> run()
   end
 
-  defp parse_options(args) do
+  defp parse_options(config, args) do
     {options, filenames} =
       OptionParser.parse!(args, strict: [pc: :boolean, cc0: :boolean, ch: :integer, o: :string])
 
-    {Map.new(options), filenames}
+    config
+    |> Map.put(:options, Map.new(options))
+    |> Map.put(:filenames, filenames)
   end
 
-  defp setup_commands({opts, []}), do: setup_commands(opts)
-
-  defp setup_commands({opts, [filename]}), do: setup_commands({opts, filename})
-
-  defp setup_commands({%{o: path} = opts, filenames}) when is_list(filenames) do
-    Enum.flat_map(filenames, fn filename ->
-      output_filename =
-        if Map.has_key?(opts, :path_prefix) do
-          short_path = String.replace(filename, Path.dirname(opts.path_prefix), "")
-          "#{path}#{short_path}"
+  defp build_file_list(%{options: options} = config) when is_map_key(options, :o) do
+    filenames =
+      Enum.reduce(config.filenames, %{}, fn filename, filenames_map ->
+        if Path.extname(filename) == ".mid" do
+          Map.put(filenames_map, filename, "#{options.o}/#{filename}")
         else
-          "#{path}/#{filename}"
+          parent_dir = Path.dirname(filename)
+
+          Path.wildcard("#{filename}/**/*.mid")
+          |> Map.new(&{&1, options.o <> String.replace(&1, parent_dir, "")})
         end
+      end)
 
-      opts = Map.delete(opts, :path_prefix)
-      opts = Map.put(opts, :o, output_filename)
-      target_dir = Path.dirname(output_filename)
+    options = Map.delete(options, :o)
+    %{config | filenames: filenames, options: options}
+  end
 
-      [
-        [{&File.mkdir_p!/1, [target_dir]}],
-        setup_commands({opts, filename})
+  defp build_file_list(config) do
+    filenames =
+      Enum.reduce(config.filenames, %{}, fn filename, filenames_map ->
+        if Path.extname(filename) == ".mid" do
+          Map.put(filenames_map, filename, nil)
+        else
+          Path.wildcard("#{filename}/**/*.mid")
+          |> Map.new(&{&1, nil})
+        end
+      end)
+
+    %{config | filenames: filenames}
+  end
+
+  defp build_command_list(config) when not is_map_key(config, :commands) do
+    config
+    |> Map.put(:commands, [])
+    |> build_command_list()
+  end
+
+  defp build_command_list(%{options: options} = config) when options == %{},
+    do: Map.delete(config, :options)
+
+  defp build_command_list(%{options: options, commands: commands} = config)
+       when is_map_key(options, :ch) do
+    commands = [{&MidiCleaner.set_midi_channel/2, [options.ch]} | commands]
+    options = Map.delete(options, :ch)
+
+    %{config | commands: commands, options: options}
+    |> build_command_list()
+  end
+
+  defp build_command_list(%{options: options, commands: commands} = config)
+       when is_map_key(options, :cc0) do
+    commands = [(&MidiCleaner.remove_unchanging_cc_val0/1) | commands]
+    options = Map.delete(options, :cc0)
+
+    %{config | commands: commands, options: options}
+    |> build_command_list()
+  end
+
+  defp build_command_list(%{options: options, commands: commands} = config)
+       when is_map_key(options, :pc) do
+    commands = [(&MidiCleaner.remove_program_changes/1) | commands]
+    options = Map.delete(options, :pc)
+
+    %{config | commands: commands, options: options}
+    |> build_command_list()
+  end
+
+  defp build_all_commands_list(%{filenames: filenames, commands: commands}) do
+    Enum.flat_map(filenames, fn {infile, outfile} ->
+      process_file_commands = [
+        {&MidiCleaner.read_file/1, [infile]},
+        commands
       ]
+
+      if outfile do
+        process_file_commands =
+          List.flatten([
+            process_file_commands,
+            {&MidiCleaner.write_file/2, [outfile]}
+          ])
+
+        path = Path.dirname(outfile)
+        [[{&File.mkdir_p!/1, [path]}], process_file_commands]
+      else
+        [List.flatten(process_file_commands)]
+      end
     end)
   end
-
-  defp setup_commands({%{path_prefix: _} = opts, filenames}) do
-    opts = Map.delete(opts, :path_prefix)
-    setup_commands({opts, filenames})
-  end
-
-  defp setup_commands({opts, filenames}) when is_list(filenames) do
-    Enum.map(filenames, fn filename ->
-      setup_commands({opts, filename})
-    end)
-  end
-
-  defp setup_commands({opts, filename}) do
-    if Path.extname(filename) == ".mid" do
-      append_command(opts, {&MidiCleaner.read_file/1, [filename]})
-    else
-      filenames = Path.wildcard("#{filename}/**/*.mid")
-      opts = Map.put(opts, :path_prefix, filename)
-      setup_commands({opts, filenames})
-    end
-  end
-
-  defp setup_commands(opts) when opts == %{}, do: []
-
-  defp setup_commands(%{pc: true} = opts),
-    do: append_command(opts, :pc, &MidiCleaner.remove_program_changes/1)
-
-  defp setup_commands(%{cc0: true} = opts),
-    do: append_command(opts, :cc0, &MidiCleaner.remove_unchanging_cc_val0/1)
-
-  defp setup_commands(%{ch: channel} = opts),
-    do: append_command(opts, :ch, {&MidiCleaner.set_midi_channel/2, [channel]})
-
-  defp setup_commands(%{o: outfile} = opts),
-    do: append_command(opts, :o, {&MidiCleaner.write_file/2, [outfile]})
-
-  defp append_command(opts, command), do: [command | setup_commands(opts)]
-
-  defp append_command(opts, key, command), do: Map.delete(opts, key) |> append_command(command)
 
   defp run(commands) do
     Application.get_env(:midi_cleaner, :runner).run(commands)
