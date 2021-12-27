@@ -4,30 +4,13 @@ defmodule MidiCleaner.RunnerTest do
 
   alias MidiCleaner.{Config, Runner}
 
-  describe "run()" do
-    test "no file list" do
-      config = config(file_list: [])
-      assert Runner.run(config) == {:error, [:no_file_list]}
-    end
-
-    test "no output" do
-      config = config(output: nil)
-      assert Runner.run(config) == {:error, [:no_output]}
-    end
-
-    test "no commands" do
-      config =
-        config(
-          remove_program_changes: false,
-          remove_unchanging_cc_val0: false,
-          set_midi_channel: nil
-        )
-
-      assert Runner.run(config) == {:error, [:no_commands]}
+  describe "run(config)" do
+    test "errors" do
+      assert {:error, _} = Runner.run(config(file_list: []))
     end
 
     test "full config" do
-      assert Runner.run(config()) == :ok
+      assert :ok == Runner.run(config())
     end
   end
 
