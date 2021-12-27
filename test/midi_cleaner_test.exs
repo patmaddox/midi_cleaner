@@ -77,7 +77,7 @@ defmodule MidiCleanerTest do
 
   test "remove_unchanging_cc_val0(sequence)" do
     cc_val0 = event(bytes: [176, 20, 0], symbol: :controller)
-    cc_val1 = event(bytes: [176, 20, 1], symbol: :controller)
+    cc_val1 = event(bytes: [177, 20, 1], symbol: :controller)
 
     note_on = event(bytes: [144, 71, 26], symbol: :on)
     note_off = event(bytes: [128, 72, 0], symbol: :off)
