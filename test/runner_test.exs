@@ -56,6 +56,19 @@ defmodule MidiCleaner.RunnerTest do
 
       assert Runner.run(commands) == "FB"
     end
+
+    test "batch commands" do
+      commands = [
+        [&__MODULE__.foo/0],
+        [
+          {&String.upcase/1, ["foo"]},
+          {&String.replace/3, ["OO", "BAR"]},
+          {&String.slice/2, [0..1]}
+        ]
+      ]
+
+      assert Runner.run(commands) == ["foo", "FB"]
+    end
   end
 
   def foo, do: "foo"

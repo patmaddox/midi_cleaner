@@ -3,6 +3,7 @@ defmodule MidiCleaner.Runner do
 
   def run([]), do: []
   def run([command]), do: run_command(command)
+  def run([first | _rest] = commands) when is_list(first), do: Enum.map(commands, &run(&1))
   def run([command | rest]), do: run_command(command) |> run(rest)
 
   defp run(val, [command]), do: run_command(command, [val])

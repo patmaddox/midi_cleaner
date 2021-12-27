@@ -26,6 +26,18 @@ defmodule MidiCleaner.CLITest do
     CLI.main(["example.mid"])
   end
 
+  test "multiple files" do
+    MockRunner
+    |> expect(:run, fn commands ->
+      assert commands == [
+               [{&MidiCleaner.read_file/1, ["example1.mid"]}],
+               [{&MidiCleaner.read_file/1, ["example2.mid"]}]
+             ]
+    end)
+
+    CLI.main(["example1.mid", "example2.mid"])
+  end
+
   test "--o=clean.mid" do
     MockRunner
     |> expect(:run, fn commands ->
@@ -75,5 +87,29 @@ defmodule MidiCleaner.CLITest do
     end)
 
     CLI.main(["--pc", "--cc0", "--ch=1", "--o=clean.mid", "example.mid"])
+  end
+
+  test "all args (multiple files)" do
+    MockRunner
+    |> expect(:run, fn commands ->
+      assert commands == [
+               [
+                 {&MidiCleaner.read_file/1, ["example1.mid"]},
+                 &MidiCleaner.remove_program_changes/1,
+                 &MidiCleaner.remove_unchanging_cc_val0/1,
+                 {&MidiCleaner.set_midi_channel/2, [1]},
+                 {&MidiCleaner.write_file/2, ["clean/example1.mid"]}
+               ],
+               [
+                 {&MidiCleaner.read_file/1, ["example2.mid"]},
+                 &MidiCleaner.remove_program_changes/1,
+                 &MidiCleaner.remove_unchanging_cc_val0/1,
+                 {&MidiCleaner.set_midi_channel/2, [1]},
+                 {&MidiCleaner.write_file/2, ["clean/example2.mid"]}
+               ]
+             ]
+    end)
+
+    CLI.main(["--pc", "--cc0", "--ch=1", "--o=clean", "example1.mid", "example2.mid"])
   end
 end
