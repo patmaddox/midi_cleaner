@@ -17,6 +17,15 @@ defmodule MidiCleaner.CLITest do
     CLI.main([])
   end
 
+  test "file arg" do
+    MockRunner
+    |> expect(:run, fn commands ->
+      assert commands == [{&MidiCleaner.read_file/1, ["example.mid"]}]
+    end)
+
+    CLI.main(["example.mid"])
+  end
+
   test "--pc" do
     MockRunner
     |> expect(:run, fn commands ->
@@ -48,12 +57,13 @@ defmodule MidiCleaner.CLITest do
     MockRunner
     |> expect(:run, fn commands ->
       assert commands == [
+               {&MidiCleaner.read_file/1, ["example.mid"]},
                &MidiCleaner.remove_program_changes/1,
                &MidiCleaner.remove_unchanging_cc_val0/1,
                {&MidiCleaner.set_midi_channel/2, [1]}
              ]
     end)
 
-    CLI.main(["--pc", "--cc0", "--ch=1"])
+    CLI.main(["--pc", "--cc0", "--ch=1", "example.mid"])
   end
 end

@@ -11,4 +11,6 @@ defmodule MidiCleaner do
     do: RemoveUnchangingCcVal0.remove_unchanging_cc_val0(sequence)
 
   def set_midi_channel(sequence, channel), do: SetMidiChannel.set_midi_channel(sequence, channel)
+
+  def read_file(filename), do: Midifile.read(filename)
 end
