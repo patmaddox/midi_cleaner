@@ -19,6 +19,11 @@ defmodule MidiCleaner.ConfigTest do
       assert Config.validate(no_commands()) == {:error, [:no_commands]}
     end
 
+    test "empty config" do
+      config = no_commands(file_list: [], output: nil)
+      assert Config.validate(config) == {:error, [:no_file_list, :no_output, :no_commands]}
+    end
+
     test "full config" do
       assert Config.validate(config()) == :ok
     end

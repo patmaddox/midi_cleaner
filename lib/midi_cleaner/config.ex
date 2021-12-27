@@ -7,9 +7,9 @@ defmodule MidiCleaner.Config do
 
   def validate(config) do
     []
-    |> validate_file_list(config)
-    |> validate_output(config)
     |> validate_commands(config)
+    |> validate_output(config)
+    |> validate_file_list(config)
     |> case do
       [] -> :ok
       errors -> {:error, errors}
