@@ -17,9 +17,21 @@ defmodule MidiCleaner.CLI do
 
   defp setup_commands({opts, [filename]}), do: setup_commands({opts, filename})
 
+  defp setup_commands({%{o: path} = opts, filenames}) when is_list(filenames) do
+    Enum.flat_map(filenames, fn filename ->
+      output_filename = "#{path}/#{filename}"
+      opts = Map.put(opts, :o, output_filename)
+      target_dir = Path.dirname(opts.o)
+
+      [
+        [{&File.mkdir_p!/1, [target_dir]}],
+        setup_commands({opts, filename})
+      ]
+    end)
+  end
+
   defp setup_commands({opts, filenames}) when is_list(filenames) do
     Enum.map(filenames, fn filename ->
-      opts = build_output_filename(opts, filename)
       setup_commands({opts, filename})
     end)
   end
@@ -44,11 +56,6 @@ defmodule MidiCleaner.CLI do
   defp append_command(opts, command), do: [command | setup_commands(opts)]
 
   defp append_command(opts, key, command), do: Map.delete(opts, key) |> append_command(command)
-
-  defp build_output_filename(%{o: outfile} = opts, filename),
-    do: Map.put(opts, :o, "#{outfile}/#{filename}")
-
-  defp build_output_filename(opts, _), do: opts
 
   defp run(commands) do
     Application.get_env(:midi_cleaner, :runner).run(commands)
