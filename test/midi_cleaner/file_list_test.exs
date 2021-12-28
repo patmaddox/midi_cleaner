@@ -39,15 +39,16 @@ defmodule MidiCleaner.FileListTest do
     test "list of midi files" do
       dirs = FileList.new(["midi/drums/1.mid", "midi/bass/2.mid"]) |> FileList.dirs()
 
-      assert dirs == [
-               "midi/bass",
-               "midi/drums"
-             ]
+      assert dirs ==
+               MapSet.new([
+                 "midi/bass",
+                 "midi/drums"
+               ])
     end
 
     test "dir" do
       dirs = FileList.new(["test/fixtures"]) |> FileList.dirs()
-      assert dirs == ["midi"]
+      assert dirs == MapSet.new(["midi"])
     end
 
     test "files and dirs mixed" do
@@ -55,12 +56,13 @@ defmodule MidiCleaner.FileListTest do
         FileList.new(["files/drums/1.mid", "test/fixtures", "files/2.mid", "test/fixtures/midi"])
         |> FileList.dirs()
 
-      assert dirs == [
-               ".",
-               "files",
-               "files/drums",
-               "midi"
-             ]
+      assert dirs ==
+               MapSet.new([
+                 ".",
+                 "files",
+                 "files/drums",
+                 "midi"
+               ])
     end
   end
 end

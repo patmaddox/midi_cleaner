@@ -7,26 +7,11 @@ defmodule MidiCleaner.FileList do
     }
   end
 
-  def files(%{paths: paths}) do
-    paths
-    |> Enum.map(&in_out_path/1)
-    |> List.flatten()
-  end
-
-  def dirs(%{paths: paths}) do
-    paths
-    |> set_of_dirs()
-    |> MapSet.to_list()
-  end
-
-  defp in_out_path({:file, path}), do: {path, path}
-
-  defp in_out_path({:dir, path}) do
-    Path.wildcard("#{path}/**/*.mid")
-    |> Enum.map(&{&1, Path.relative_to(&1, path)})
-  end
-
   def empty?(%{paths: paths}), do: Enum.empty?(paths)
+
+  def files(%{paths: paths}), do: list_files(paths)
+
+  def dirs(%{paths: paths}), do: list_dirs(MapSet.new(), paths)
 
   defp file_or_dir_tuple(path) do
     if Path.extname(path) == ".mid" do
@@ -36,24 +21,44 @@ defmodule MidiCleaner.FileList do
     end
   end
 
-  defp set_of_dirs(paths), do: set_of_dirs(MapSet.new(), paths)
+  defp list_files([]), do: []
 
-  defp set_of_dirs(dirs, []), do: dirs
-
-  defp set_of_dirs(dirs, [{:file, path} | rest]) do
-    dirs
-    |> add_dir(path)
-    |> set_of_dirs(rest)
+  defp list_files([{:file, path} | rest]) do
+    [{path, path} | list_files(rest)]
   end
 
-  defp set_of_dirs(dirs, [{:dir, path} | rest]) do
+  defp list_files([{:dir, path} | rest]) do
     Path.wildcard("#{path}/**/*.mid")
-    |> Stream.map(&Path.relative_to(&1, path))
-    |> Enum.reduce(dirs, &add_dir/2)
-    |> set_of_dirs(rest)
+    |> Enum.map(&{&1, Path.relative_to(&1, path)})
+    |> list_files(rest)
   end
 
-  defp add_dir(%MapSet{} = dirs, path), do: MapSet.put(dirs, Path.dirname(path))
+  defp list_files([{_, _} = first | rest], full_list) do
+    [first | list_files(rest, full_list)]
+  end
 
-  defp add_dir(path, %MapSet{} = dirs), do: add_dir(dirs, path)
+  defp list_files([], []), do: []
+
+  defp list_dirs(dirs, []), do: dirs
+
+  defp list_dirs(dirs, [{:file, path} | rest]) do
+    dirs
+    |> MapSet.put(Path.dirname(path))
+    |> list_dirs(rest)
+  end
+
+  defp list_dirs(dirs, [{:dir, path} | rest]) do
+    Path.wildcard("#{path}/**/*.mid")
+    |> Stream.map(&Path.dirname/1)
+    |> Stream.map(&Path.relative_to(&1, path))
+    |> MapSet.new()
+    |> MapSet.union(dirs)
+    |> list_dirs(rest)
+  end
+
+  defp list_dirs(dirs, [first | rest]) do
+    dirs
+    |> MapSet.put(first)
+    |> list_dirs(rest)
+  end
 end
