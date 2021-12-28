@@ -7,43 +7,29 @@ defmodule MidiCleaner.Runner do
 
   alias MidiCleaner.{Config, FileList}
 
-  def new(config) do
-    state = %{
-      config: config,
-      processors: [],
-      status: :new
-    }
-
-    GenServer.start_link(__MODULE__, state)
-  end
+  def new(config), do: GenServer.start_link(__MODULE__, config)
 
   def run(%Config{} = config) do
     {:ok, pid} = new(config)
     :ok = run(pid, :infinity)
+    :ok = GenServer.stop(pid)
   end
 
   def run(pid, timeout \\ 5000), do: GenServer.call(pid, :run, timeout)
 
-  def status(pid), do: GenServer.call(pid, :status)
+  @impl true
+  def init(config), do: {:ok, config}
 
   @impl true
-  def init(state), do: {:ok, state}
-
-  @impl true
-  def handle_call(:run, _from, %{config: config} = state) do
+  def handle_call(:run, _from, config) do
     with :ok <- Config.validate(config) do
       make_output_dirs(config)
-      new_processors = process_files(config)
+      process_files(config)
 
-      {:reply, :ok, %{state | status: :running, processors: new_processors}}
+      {:reply, :ok, config}
     else
-      errors -> {:reply, errors, %{state | status: errors}}
+      errors -> {:reply, errors, config}
     end
-  end
-
-  @impl true
-  def handle_call(:status, _from, %{status: status} = state) do
-    {:reply, status, state}
   end
 
   defp make_output_dirs(config) do
@@ -60,6 +46,6 @@ defmodule MidiCleaner.Runner do
     |> Task.async_stream(fn {infile, outfile} ->
       :ok = file_processor().process_file(config, infile, outfile)
     end)
-    |> Enum.map(& &1)
+    |> Enum.each(& &1)
   end
 end

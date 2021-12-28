@@ -15,8 +15,7 @@ defmodule MidiCleaner.FileProcessor do
     state = %{
       config: config,
       infile: infile,
-      outfile: outfile,
-      status: :new
+      outfile: outfile
     }
 
     GenServer.call(pid, {:configure, state})
@@ -31,8 +30,6 @@ defmodule MidiCleaner.FileProcessor do
 
   def process(pid), do: GenServer.call(pid, :process)
 
-  def status(pid), do: GenServer.call(pid, :status)
-
   @impl true
   def init(state) do
     {:ok, state}
@@ -42,9 +39,6 @@ defmodule MidiCleaner.FileProcessor do
   def handle_call({:configure, new_state}, _from, _state), do: {:reply, :ok, new_state}
 
   @impl true
-  def handle_call(:status, _from, state), do: {:reply, state.status, state}
-
-  @impl true
   def handle_call(:process, _from, %{config: config, infile: infile, outfile: outfile} = state) do
     read_file(infile)
     |> maybe_remove_program_changes(config)
@@ -52,7 +46,7 @@ defmodule MidiCleaner.FileProcessor do
     |> maybe_set_midi_channel(config)
     |> write_file(outfile, config)
 
-    {:reply, :ok, %{state | status: :done}}
+    {:reply, :ok, state}
   end
 
   defp read_file(filename), do: midi_cleaner().read_file(filename)

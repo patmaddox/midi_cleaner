@@ -8,16 +8,9 @@ defmodule MidiCleaner.FileProcessorTest do
 
   setup :verify_on_exit!
 
-  describe "GenServer behavior" do
-    test "status" do
-      {:ok, pid} = FileProcessor.start_link([])
-      :ok = FileProcessor.configure(pid, Config.new(), "in.mid", "out.mid")
-      # {:ok, pid} = FileProcessor.new(Config.new(), "in.mid", "out.mid")
-      assert FileProcessor.status(pid) == :new
-    end
-  end
-
   describe "process_file(config, infile, outfile)" do
+    # The function calls are inline here because we need access to the pid
+    # to allow Mox.
     test "one command" do
       {:ok, pid} = FileProcessor.start_link([])
 
