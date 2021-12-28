@@ -35,11 +35,13 @@ defmodule MidiCleaner.Runner do
   @impl true
   def handle_call(:run, _from, %{config: config, processors: processors} = state) do
     with :ok <- Config.validate(config) do
-      FileList.dirs(config.file_list) |> Enum.each(&make_output_dir(&1, config))
+      FileList.dirs(config.file_list)
+      |> Enum.map(&Task.async(fn -> make_output_dir(&1, config) end))
+      |> Enum.each(&Task.await/1)
 
       new_processors =
         FileList.files(config.file_list)
-        |> Enum.map(fn {infile, outfile} ->
+        |> Stream.map(fn {infile, outfile} ->
           {:ok, processor} = file_processor().process_file(config, infile, outfile)
           processor
         end)

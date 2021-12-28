@@ -31,7 +31,6 @@ Computers refer to MIDI channels 0-15, and MidiCleaner currently uses this conve
 
 * Update typespecs (?) in @callback definitions
 * Review expected vs actual convention in ExUnit
-* Handle multiple files in parallel
 * Report results
 * Report progress
 * Handle failures
