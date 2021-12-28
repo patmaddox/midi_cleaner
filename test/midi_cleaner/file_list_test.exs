@@ -4,47 +4,63 @@ defmodule MidiCleaner.FileListTest do
 
   alias MidiCleaner.FileList
 
-  describe "each_file()" do
+  describe "files()" do
     test "list of midi files" do
-      FileList.new(["1.mid", "2.mid"])
-      |> FileList.each_file(&send(self(), {:file, &1}))
+      files = FileList.new(["1.mid", "2.mid"]) |> FileList.files()
 
-      assert_received({:file, {"1.mid", "1.mid"}})
-      assert_received({:file, {"2.mid", "2.mid"}})
+      assert files == [
+               {"1.mid", "1.mid"},
+               {"2.mid", "2.mid"}
+             ]
     end
 
     test "dir" do
-      FileList.new(["test/fixtures"])
-      |> FileList.each_file(&send(self(), {:file, &1}))
+      files = FileList.new(["test/fixtures"]) |> FileList.files()
 
-      assert_received({:file, {"test/fixtures/midi/drums.mid", "midi/drums.mid"}})
-      assert_received({:file, {"test/fixtures/midi/example.mid", "midi/example.mid"}})
-    end
-  end
-
-  describe "each_dir()" do
-    test "list of midi files" do
-      FileList.new(["midi/drums/1.mid", "midi/bass/2.mid"])
-      |> FileList.each_dir(&send(self(), {:dir, &1}))
-
-      assert_received({:dir, "midi/drums"})
-      assert_received({:dir, "midi/bass"})
-    end
-
-    test "dir" do
-      FileList.new(["test/fixtures"])
-      |> FileList.each_dir(&send(self(), {:dir, &1}))
-
-      assert_received({:dir, "midi"})
+      assert files == [
+               {"test/fixtures/midi/drums.mid", "midi/drums.mid"},
+               {"test/fixtures/midi/example.mid", "midi/example.mid"}
+             ]
     end
 
     test "files and dirs mixed" do
-      FileList.new(["files/drums/1.mid", "test/fixtures", "files/2.mid", "test/fixtures/midi"])
-      |> FileList.each_dir(&send(self(), {:dir, &1}))
+      files = FileList.new(["1.mid", "2.mid", "test/fixtures"]) |> FileList.files()
 
-      assert_received({:dir, "files/drums"})
-      assert_received({:dir, "files"})
-      assert_received({:dir, "midi"})
+      assert files == [
+               {"1.mid", "1.mid"},
+               {"2.mid", "2.mid"},
+               {"test/fixtures/midi/drums.mid", "midi/drums.mid"},
+               {"test/fixtures/midi/example.mid", "midi/example.mid"}
+             ]
+    end
+  end
+
+  describe "dirs()" do
+    test "list of midi files" do
+      dirs = FileList.new(["midi/drums/1.mid", "midi/bass/2.mid"]) |> FileList.dirs()
+
+      assert dirs == [
+               "midi/bass",
+               "midi/drums"
+             ]
+    end
+
+    test "dir" do
+      dirs = FileList.new(["test/fixtures"]) |> FileList.dirs()
+      assert dirs == ["midi"]
+    end
+
+    test "files and dirs mixed" do
+      dirs =
+        FileList.new(["files/drums/1.mid", "test/fixtures", "files/2.mid", "test/fixtures/midi"])
+        |> FileList.dirs()
+
+      assert dirs == [
+               ".",
+               "files",
+               "files/drums",
+               "midi"
+             ]
     end
   end
 end

@@ -5,7 +5,7 @@ defmodule MidiCleaner.Runner do
 
   import MidiCleaner, only: [midi_cleaner: 0]
 
-  alias MidiCleaner.Config
+  alias MidiCleaner.{Config, FileList}
 
   def new(config), do: GenServer.start_link(__MODULE__, config)
 
@@ -17,9 +17,10 @@ defmodule MidiCleaner.Runner do
   @impl true
   def handle_call(:run, _from, config) do
     with :ok <- Config.validate(config) do
-      Config.each_dir(config, &make_output_dir(&1, config))
+      FileList.dirs(config.file_list) |> Enum.each(&make_output_dir(&1, config))
 
-      Config.each_file(config, fn {infile, outfile} ->
+      FileList.files(config.file_list)
+      |> Enum.each(fn {infile, outfile} ->
         file_processor().process_file(config, infile, outfile)
       end)
 

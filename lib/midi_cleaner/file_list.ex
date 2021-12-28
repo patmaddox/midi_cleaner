@@ -7,9 +7,24 @@ defmodule MidiCleaner.FileList do
     }
   end
 
-  def each_file(%{paths: paths}, func), do: Enum.each(paths, &process_path(&1, func))
+  def files(%{paths: paths}) do
+    paths
+    |> Enum.map(&in_out_path/1)
+    |> List.flatten()
+  end
 
-  def each_dir(%{paths: paths}, func), do: set_of_dirs(paths) |> Enum.each(func)
+  def dirs(%{paths: paths}) do
+    paths
+    |> set_of_dirs()
+    |> MapSet.to_list()
+  end
+
+  defp in_out_path({:file, path}), do: {path, path}
+
+  defp in_out_path({:dir, path}) do
+    Path.wildcard("#{path}/**/*.mid")
+    |> Enum.map(&{&1, Path.relative_to(&1, path)})
+  end
 
   def empty?(%{paths: paths}), do: Enum.empty?(paths)
 
@@ -19,13 +34,6 @@ defmodule MidiCleaner.FileList do
     else
       {:dir, path}
     end
-  end
-
-  defp process_path({:file, path}, func), do: func.({path, path})
-
-  defp process_path({:dir, path}, func) do
-    Path.wildcard("#{path}/**/*.mid")
-    |> Enum.each(&func.({&1, Path.relative_to(&1, path)}))
   end
 
   defp set_of_dirs(paths), do: set_of_dirs(MapSet.new(), paths)
