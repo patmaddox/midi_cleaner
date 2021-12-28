@@ -8,8 +8,19 @@ defmodule MidiCleaner.FileProcessorTest do
 
   setup :verify_on_exit!
 
+  describe "GenServer behavior" do
+    test "status" do
+      {:ok, pid} = FileProcessor.new(Config.new(), "in.mid", "out.mid")
+      assert FileProcessor.status(pid) == :new
+    end
+  end
+
   describe "process_file(config, infile, outfile)" do
     test "one command" do
+      {:ok, pid} =
+        no_commands(remove_unchanging_cc_val0: true)
+        |> FileProcessor.new("in.mid", "out.mid")
+
       MockMidiCleaner
       |> expect_read_file("in.mid")
       |> expect_remove_unchanging_cc_val0("in.mid", :after_read_file)
@@ -18,12 +29,17 @@ defmodule MidiCleaner.FileProcessorTest do
         :after_remove_unchanging_cc_val0,
         "export/clean/out.mid"
       )
+      |> allow(self(), pid)
 
-      no_commands(remove_unchanging_cc_val0: true)
-      |> FileProcessor.process_file("in.mid", "out.mid")
+      FileProcessor.process(pid)
+      FileProcessor.wait(pid)
     end
 
     test "a different command" do
+      {:ok, pid} =
+        no_commands(remove_program_changes: true)
+        |> FileProcessor.new("in.mid", "out.mid")
+
       MockMidiCleaner
       |> expect_read_file("in.mid")
       |> expect_remove_program_changes("in.mid", :after_read_file)
@@ -32,20 +48,25 @@ defmodule MidiCleaner.FileProcessorTest do
         :after_remove_program_changes,
         "export/clean/out.mid"
       )
+      |> allow(self(), pid)
 
-      no_commands(remove_program_changes: true)
-      |> FileProcessor.process_file("in.mid", "out.mid")
+      FileProcessor.process(pid)
+      FileProcessor.wait(pid)
     end
 
     test "all commands" do
+      {:ok, pid} = FileProcessor.new(config(), "in.mid", "out.mid")
+
       MockMidiCleaner
       |> expect_read_file("in.mid")
       |> expect_remove_program_changes("in.mid", :after_read_file)
       |> expect_remove_unchanging_cc_val0("in.mid", :after_remove_program_changes)
       |> expect_set_midi_channel("in.mid", :after_remove_unchanging_cc_val0, 0)
       |> expect_write_file("in.mid", :after_set_midi_channel, "export/clean/out.mid")
+      |> allow(self(), pid)
 
-      FileProcessor.process_file(config(), "in.mid", "out.mid")
+      FileProcessor.process(pid)
+      FileProcessor.wait(pid)
     end
   end
 

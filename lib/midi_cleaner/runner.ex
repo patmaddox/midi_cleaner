@@ -1,11 +1,21 @@
 defmodule MidiCleaner.Runner do
-  import MidiCleaner, only: [midi_cleaner: 0]
-
   @callback run(Map.t()) :: :ok
 
-  alias MidiCleaner.{Config, FileProcessor}
+  use GenServer
 
-  def run(config) do
+  import MidiCleaner, only: [midi_cleaner: 0]
+
+  alias MidiCleaner.Config
+
+  def new(config), do: GenServer.start_link(__MODULE__, config)
+
+  @impl true
+  def init(config), do: {:ok, config}
+
+  def run(target) when is_pid(target), do: GenServer.call(target, :run)
+
+  @impl true
+  def handle_call(:run, _from, config) do
     with :ok <- Config.validate(config) do
       Config.each_dir(config, &make_output_dir(&1, config))
 
@@ -13,9 +23,9 @@ defmodule MidiCleaner.Runner do
         file_processor().process_file(config, infile, outfile)
       end)
 
-      :ok
+      {:reply, :ok, config}
     else
-      errors -> errors
+      errors -> {:reply, errors, config}
     end
   end
 
