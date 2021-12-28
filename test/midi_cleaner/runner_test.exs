@@ -4,7 +4,7 @@ defmodule MidiCleaner.RunnerTest do
 
   import Mox
 
-  alias MidiCleaner.{Config, Runner, MockMidiCleaner}
+  alias MidiCleaner.{Config, Runner, MockMidiCleaner, MockFileProcessor}
 
   setup :verify_on_exit!
 
@@ -14,101 +14,32 @@ defmodule MidiCleaner.RunnerTest do
       assert {:error, _} = Runner.run(config)
     end
 
-    test "one file, one command" do
-      MockMidiCleaner
-      |> expect_make_dir("export/clean/.")
-      |> expect_read_file("example.mid")
-      |> expect_remove_unchanging_cc_val0("example.mid", :after_read_file)
-      |> expect_write_file(
-        "example.mid",
-        :after_remove_unchanging_cc_val0,
-        "export/clean/example.mid"
-      )
-
-      config =
-        no_commands(
-          file_list: ["example.mid"],
-          remove_unchanging_cc_val0: true
-        )
-
-      assert :ok == Runner.run(config)
-    end
-
-    test "one file, different command" do
-      MockMidiCleaner
-      |> expect_make_dir("export/clean/midi")
-      |> expect_read_file("midi/example.mid")
-      |> expect_remove_program_changes("midi/example.mid", :after_read_file)
-      |> expect_write_file(
-        "midi/example.mid",
-        :after_remove_program_changes,
-        "export/clean/midi/example.mid"
-      )
-
-      config =
-        no_commands(
-          file_list: ["midi/example.mid"],
-          remove_program_changes: true
-        )
-
-      assert :ok == Runner.run(config)
-    end
-
-    test "one file, all commands" do
-      MockMidiCleaner
-      |> expect_make_dir("export/clean/.")
-      |> expect_read_file("example.mid")
-      |> expect_remove_program_changes("example.mid", :after_read_file)
-      |> expect_remove_unchanging_cc_val0("example.mid", :after_remove_program_changes)
-      |> expect_set_midi_channel("example.mid", :after_remove_unchanging_cc_val0, 0)
-      |> expect_write_file("example.mid", :after_set_midi_channel, "export/clean/example.mid")
-
+    test "one file" do
       config = config(file_list: ["example.mid"])
+
+      expect_make_dir("export/clean/.")
+      expect_process_file(config, "example.mid", "example.mid")
+
       assert :ok == Runner.run(config)
     end
 
     test "multiple files" do
-      MockMidiCleaner
-      |> expect_make_dir("export/clean/bass")
-      |> expect_make_dir("export/clean/drums")
-      |> expect_read_file("drums/1.mid")
-      |> expect_remove_program_changes("drums/1.mid", :after_read_file)
-      |> expect_remove_unchanging_cc_val0("drums/1.mid", :after_remove_program_changes)
-      |> expect_set_midi_channel("drums/1.mid", :after_remove_unchanging_cc_val0, 0)
-      |> expect_write_file("drums/1.mid", :after_set_midi_channel, "export/clean/drums/1.mid")
-      |> expect_read_file("bass/2.mid")
-      |> expect_remove_program_changes("bass/2.mid", :after_read_file)
-      |> expect_remove_unchanging_cc_val0("bass/2.mid", :after_remove_program_changes)
-      |> expect_set_midi_channel("bass/2.mid", :after_remove_unchanging_cc_val0, 0)
-      |> expect_write_file("bass/2.mid", :after_set_midi_channel, "export/clean/bass/2.mid")
-
       config = config(file_list: ["drums/1.mid", "bass/2.mid"])
+
+      expect_make_dir("export/clean/bass")
+      expect_make_dir("export/clean/drums")
+      expect_process_file(config, "drums/1.mid", "drums/1.mid")
+      expect_process_file(config, "bass/2.mid", "bass/2.mid")
+
       assert :ok == Runner.run(config)
     end
 
-    test "dir, one command" do
-      MockMidiCleaner
-      |> expect_make_dir("export/clean/midi")
-      |> expect_read_file("test/fixtures/midi/drums.mid")
-      |> expect_remove_unchanging_cc_val0("test/fixtures/midi/drums.mid", :after_read_file)
-      |> expect_write_file(
-        "test/fixtures/midi/drums.mid",
-        :after_remove_unchanging_cc_val0,
-        "export/clean/midi/drums.mid"
-      )
-      |> expect_read_file("test/fixtures/midi/example.mid")
-      |> expect_remove_unchanging_cc_val0("test/fixtures/midi/example.mid", :after_read_file)
-      |> expect_write_file(
-        "test/fixtures/midi/example.mid",
-        :after_remove_unchanging_cc_val0,
-        "export/clean/midi/example.mid"
-      )
+    test "dir" do
+      config = config(file_list: ["test/fixtures"])
 
-      config =
-        no_commands(
-          file_list: ["test/fixtures"],
-          remove_unchanging_cc_val0: true
-        )
+      expect_make_dir("export/clean/midi")
+      expect_process_file(config, "test/fixtures/midi/drums.mid", "midi/drums.mid")
+      expect_process_file(config, "test/fixtures/midi/example.mid", "midi/example.mid")
 
       assert :ok == Runner.run(config)
     end
@@ -126,43 +57,12 @@ defmodule MidiCleaner.RunnerTest do
     |> Config.new()
   end
 
-  defp no_commands(overrides) do
-    [
-      remove_program_changes: false,
-      remove_unchanging_cc_val0: false,
-      set_midi_channel: nil
-    ]
-    |> Keyword.merge(overrides)
-    |> config()
+  defp expect_make_dir(dir),
+    do: expect(MockMidiCleaner, :make_dir, fn ^dir -> {dir, :after_make_dir} end)
+
+  defp expect_process_file(config, infile, outfile) do
+    expect(MockFileProcessor, :process_file, fn ^config, ^infile, ^outfile ->
+      {infile, :after_process_file}
+    end)
   end
-
-  defp expect_make_dir(mock, dir),
-    do: expect(mock, :make_dir, fn ^dir -> {dir, :after_make_dir} end)
-
-  defp expect_read_file(mock, filename),
-    do: expect(mock, :read_file, fn ^filename -> {filename, :after_read_file} end)
-
-  defp expect_remove_program_changes(mock, filename, sequence),
-    do:
-      expect(mock, :remove_program_changes, fn {^filename, ^sequence} ->
-        {filename, :after_remove_program_changes}
-      end)
-
-  defp expect_remove_unchanging_cc_val0(mock, filename, sequence),
-    do:
-      expect(mock, :remove_unchanging_cc_val0, fn {^filename, ^sequence} ->
-        {filename, :after_remove_unchanging_cc_val0}
-      end)
-
-  defp expect_set_midi_channel(mock, filename, sequence, channel),
-    do:
-      expect(mock, :set_midi_channel, fn {^filename, ^sequence}, ^channel ->
-        {filename, :after_set_midi_channel}
-      end)
-
-  defp expect_write_file(mock, filename, sequence, outfile),
-    do:
-      expect(mock, :write_file, fn {^filename, ^sequence}, ^outfile ->
-        {filename, :after_write_file}
-      end)
 end

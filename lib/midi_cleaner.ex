@@ -25,4 +25,6 @@ defmodule MidiCleaner do
   def write_file(sequence, filename), do: Midifile.write(sequence, filename)
 
   def make_dir(dir), do: File.mkdir_p!(dir)
+
+  def midi_cleaner(), do: Application.get_env(:midi_cleaner, :midi_cleaner)
 end
