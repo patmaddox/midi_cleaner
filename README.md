@@ -2,8 +2,7 @@
 
 ## TODO
 
-* Handle input dirs
-* Correctly handle input dir with only one file (I think it fails)
+* Improve path handling (e.g. `files/midi` vs `files/midi/`)
 * Update typespecs (?) in @callback definitions
 * Review expected vs actual convention in ExUnit
 * Handle multiple files in parallel

@@ -24,6 +24,11 @@ defmodule MidiCleaner.Config do
     end
   end
 
+  def each_file(%{file_list: file_list}, func), do: FileList.each_file(file_list, func)
+
+  def each_parent_dir(%{file_list: file_list}, func),
+    do: FileList.each_parent_dir(file_list, func)
+
   defp validate_file_list(errors, %{file_list: file_list}) do
     if FileList.empty?(file_list) do
       [:no_file_list | errors]

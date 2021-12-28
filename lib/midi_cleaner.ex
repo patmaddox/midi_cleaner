@@ -1,6 +1,7 @@
 defmodule MidiCleaner do
   @callback read_file(String.t()) :: :ok
   @callback write_file(Midifile.Sequence.t(), String.t()) :: :ok
+  @callback make_dir(String.t()) :: :ok
 
   @callback remove_program_changes(Midifile.Sequence.t()) :: :ok
   @callback remove_unchanging_cc_val0(Midifile.Sequence.t()) :: :ok
@@ -22,4 +23,6 @@ defmodule MidiCleaner do
   def read_file(filename), do: Midifile.read(filename)
 
   def write_file(sequence, filename), do: Midifile.write(sequence, filename)
+
+  def make_dir(dir), do: File.mkdir_p!(dir)
 end
