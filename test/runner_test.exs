@@ -18,10 +18,12 @@ defmodule MidiCleaner.RunnerTest do
       MockMidiCleaner
       |> expect_read_file("example.mid", :sequence_after_read_file)
       |> expect_remove_unchanging_cc_val0(
+        "example.mid",
         :sequence_after_read_file,
         :sequence_after_remove_unchanging_cc_val0
       )
       |> expect_write_file(
+        "example.mid",
         :sequence_after_remove_unchanging_cc_val0,
         "export/clean/example.mid",
         :after_write_file
@@ -40,10 +42,12 @@ defmodule MidiCleaner.RunnerTest do
       MockMidiCleaner
       |> expect_read_file("example.mid", :sequence_after_read_file)
       |> expect_remove_program_changes(
+        "example.mid",
         :sequence_after_read_file,
         :sequence_after_remove_program_changes
       )
       |> expect_write_file(
+        "example.mid",
         :sequence_after_remove_program_changes,
         "export/clean/example.mid",
         :after_write_file
@@ -62,19 +66,23 @@ defmodule MidiCleaner.RunnerTest do
       MockMidiCleaner
       |> expect_read_file("example.mid", :sequence_after_read_file)
       |> expect_remove_program_changes(
+        "example.mid",
         :sequence_after_read_file,
         :sequence_after_remove_program_changes
       )
       |> expect_remove_unchanging_cc_val0(
+        "example.mid",
         :sequence_after_remove_program_changes,
         :sequence_after_remove_unchanging_cc_val0
       )
       |> expect_set_midi_channel(
+        "example.mid",
         :sequence_after_remove_unchanging_cc_val0,
         0,
         :sequence_after_set_midi_channel
       )
       |> expect_write_file(
+        "example.mid",
         :sequence_after_set_midi_channel,
         "export/clean/example.mid",
         :after_write_file
@@ -86,43 +94,51 @@ defmodule MidiCleaner.RunnerTest do
 
     test "multiple files" do
       MockMidiCleaner
-      |> expect_read_file("1.mid", {:sequence_after_read_file, "1.mid"})
+      |> expect_read_file("1.mid", :sequence_after_read_file)
       |> expect_remove_program_changes(
-        {:sequence_after_read_file, "1.mid"},
-        {:sequence_after_remove_program_changes, "1.mid"}
+        "1.mid",
+        :sequence_after_read_file,
+        :sequence_after_remove_program_changes
       )
       |> expect_remove_unchanging_cc_val0(
-        {:sequence_after_remove_program_changes, "1.mid"},
-        {:sequence_after_remove_unchanging_cc_val0, "1.mid"}
+        "1.mid",
+        :sequence_after_remove_program_changes,
+        :sequence_after_remove_unchanging_cc_val0
       )
       |> expect_set_midi_channel(
-        {:sequence_after_remove_unchanging_cc_val0, "1.mid"},
+        "1.mid",
+        :sequence_after_remove_unchanging_cc_val0,
         0,
-        {:sequence_after_set_midi_channel, "1.mid"}
+        :sequence_after_set_midi_channel
       )
       |> expect_write_file(
-        {:sequence_after_set_midi_channel, "1.mid"},
+        "1.mid",
+        :sequence_after_set_midi_channel,
         "export/clean/1.mid",
-        {:after_write_file, "1.mid"}
+        :after_write_file
       )
-      |> expect_read_file("2.mid", {:sequence_after_read_file, "2.mid"})
+      |> expect_read_file("2.mid", :sequence_after_read_file)
       |> expect_remove_program_changes(
-        {:sequence_after_read_file, "2.mid"},
-        {:sequence_after_remove_program_changes, "2.mid"}
+        "2.mid",
+        :sequence_after_read_file,
+        :sequence_after_remove_program_changes
       )
       |> expect_remove_unchanging_cc_val0(
-        {:sequence_after_remove_program_changes, "2.mid"},
-        {:sequence_after_remove_unchanging_cc_val0, "2.mid"}
+        "2.mid",
+        :sequence_after_remove_program_changes,
+        :sequence_after_remove_unchanging_cc_val0
       )
       |> expect_set_midi_channel(
-        {:sequence_after_remove_unchanging_cc_val0, "2.mid"},
+        "2.mid",
+        :sequence_after_remove_unchanging_cc_val0,
         0,
-        {:sequence_after_set_midi_channel, "2.mid"}
+        :sequence_after_set_midi_channel
       )
       |> expect_write_file(
-        {:sequence_after_set_midi_channel, "2.mid"},
+        "2.mid",
+        :sequence_after_set_midi_channel,
         "export/clean/2.mid",
-        {:after_write_file, "2.mid"}
+        :after_write_file
       )
 
       config = config(file_list: ["1.mid", "2.mid"])
@@ -157,17 +173,21 @@ defmodule MidiCleaner.RunnerTest do
   end
 
   defp expect_read_file(mock, filename, result),
-    do: expect(mock, :read_file, fn ^filename -> result end)
+    do: expect(mock, :read_file, fn ^filename -> {filename, result} end)
 
-  defp expect_remove_program_changes(mock, sequence, result),
-    do: expect(mock, :remove_program_changes, fn ^sequence -> result end)
+  defp expect_remove_program_changes(mock, filename, sequence, result),
+    do: expect(mock, :remove_program_changes, fn {^filename, ^sequence} -> {filename, result} end)
 
-  defp expect_remove_unchanging_cc_val0(mock, sequence, result),
-    do: expect(mock, :remove_unchanging_cc_val0, fn ^sequence -> result end)
+  defp expect_remove_unchanging_cc_val0(mock, filename, sequence, result),
+    do:
+      expect(mock, :remove_unchanging_cc_val0, fn {^filename, ^sequence} -> {filename, result} end)
 
-  defp expect_set_midi_channel(mock, sequence, channel, result),
-    do: expect(mock, :set_midi_channel, fn ^sequence, ^channel -> result end)
+  defp expect_set_midi_channel(mock, filename, sequence, channel, result),
+    do:
+      expect(mock, :set_midi_channel, fn {^filename, ^sequence}, ^channel ->
+        {filename, result}
+      end)
 
-  defp expect_write_file(mock, sequence, filename, result),
-    do: expect(mock, :write_file, fn ^sequence, ^filename -> result end)
+  defp expect_write_file(mock, filename, sequence, outfile, result),
+    do: expect(mock, :write_file, fn {^filename, ^sequence}, ^outfile -> {filename, result} end)
 end
