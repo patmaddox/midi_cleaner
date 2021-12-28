@@ -19,13 +19,13 @@ defmodule MidiCleaner.Runner do
 
   def run(%Config{} = config) do
     {:ok, pid} = new(config)
-    run(pid)
-    wait(pid)
+    run(pid, :infinity)
+    wait(pid, :infinity)
   end
 
-  def run(pid), do: GenServer.call(pid, :run)
+  def run(pid, timeout \\ 5000), do: GenServer.call(pid, :run, timeout)
 
-  def wait(pid), do: GenServer.call(pid, :wait)
+  def wait(pid, timeout \\ 5000), do: GenServer.call(pid, :wait, timeout)
 
   def status(pid), do: GenServer.call(pid, :status)
 
