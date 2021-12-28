@@ -23,7 +23,7 @@ defmodule MidiCleaner.CLI do
     |> Map.put(:file_list, file_list)
   end
 
-  defp run(commands) do
-    Application.get_env(:midi_cleaner, :runner).run(commands)
+  defp run(config) do
+    Application.get_env(:midi_cleaner, :runner).run(config)
   end
 end
