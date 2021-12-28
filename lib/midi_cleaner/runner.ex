@@ -6,19 +6,19 @@ defmodule MidiCleaner.Runner do
   def run(config) do
     with :ok <- Config.validate(config) do
       Config.each_dir(config, &make_output_dir(&1, config))
-
-      Config.each_file(config, fn {infile, outfile} ->
-        read_file(infile)
-        |> maybe_remove_program_changes(config)
-        |> maybe_remove_unchanging_cc_val0(config)
-        |> maybe_set_midi_channel(config)
-        |> write_file(outfile, config)
-      end)
-
+      Config.each_file(config, fn {infile, outfile} -> process_file(config, infile, outfile) end)
       :ok
     else
       errors -> errors
     end
+  end
+
+  defp process_file(config, infile, outfile) do
+    read_file(infile)
+    |> maybe_remove_program_changes(config)
+    |> maybe_remove_unchanging_cc_val0(config)
+    |> maybe_set_midi_channel(config)
+    |> write_file(outfile, config)
   end
 
   defp read_file(filename), do: midi_cleaner().read_file(filename)
