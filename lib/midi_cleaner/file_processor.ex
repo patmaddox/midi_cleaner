@@ -24,8 +24,9 @@ defmodule MidiCleaner.FileProcessor do
 
   def process_file(config, infile, outfile) do
     {:ok, pid} = start_link([])
-    configure(pid, config, infile, outfile)
-    process(pid)
+    :ok = configure(pid, config, infile, outfile)
+    :ok = process(pid)
+    :ok = GenServer.stop(pid)
   end
 
   def process(pid), do: GenServer.call(pid, :process)
