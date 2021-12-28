@@ -87,8 +87,8 @@ defmodule MidiCleaner.RunnerTest do
     end
   end
 
-  defp config(overrides \\ []) do
-    %Config{
+  defp config(overrides) do
+    %{
       file_list: ["example.mid", "files/example.mid", "example/midi"],
       output: "export/clean",
       remove_program_changes: true,
@@ -96,6 +96,7 @@ defmodule MidiCleaner.RunnerTest do
       set_midi_channel: 0
     }
     |> Map.merge(Map.new(overrides))
+    |> Config.new()
   end
 
   defp no_commands(overrides) do

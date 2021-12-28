@@ -2,7 +2,7 @@ defmodule MidiCleaner.CLI do
   alias MidiCleaner.Config
 
   def main(args) do
-    %Config{}
+    Config.new()
     |> parse_options(args)
     |> run()
   end

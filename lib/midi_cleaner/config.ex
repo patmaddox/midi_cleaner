@@ -5,6 +5,11 @@ defmodule MidiCleaner.Config do
             remove_unchanging_cc_val0: false,
             set_midi_channel: nil
 
+  def new(overrides \\ %{}) do
+    %__MODULE__{}
+    |> Map.merge(overrides)
+  end
+
   def validate(config) do
     []
     |> validate_commands(config)
