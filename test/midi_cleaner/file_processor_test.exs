@@ -10,16 +10,24 @@ defmodule MidiCleaner.FileProcessorTest do
 
   describe "GenServer behavior" do
     test "status" do
-      {:ok, pid} = FileProcessor.new(Config.new(), "in.mid", "out.mid")
+      {:ok, pid} = FileProcessor.start_link([])
+      :ok = FileProcessor.configure(pid, Config.new(), "in.mid", "out.mid")
+      # {:ok, pid} = FileProcessor.new(Config.new(), "in.mid", "out.mid")
       assert FileProcessor.status(pid) == :new
     end
   end
 
   describe "process_file(config, infile, outfile)" do
     test "one command" do
-      {:ok, pid} =
-        no_commands(remove_unchanging_cc_val0: true)
-        |> FileProcessor.new("in.mid", "out.mid")
+      {:ok, pid} = FileProcessor.start_link([])
+
+      :ok =
+        FileProcessor.configure(
+          pid,
+          no_commands(remove_unchanging_cc_val0: true),
+          "in.mid",
+          "out.mid"
+        )
 
       MockMidiCleaner
       |> expect_read_file("in.mid")
@@ -36,9 +44,15 @@ defmodule MidiCleaner.FileProcessorTest do
     end
 
     test "a different command" do
-      {:ok, pid} =
-        no_commands(remove_program_changes: true)
-        |> FileProcessor.new("in.mid", "out.mid")
+      {:ok, pid} = FileProcessor.start_link([])
+
+      :ok =
+        FileProcessor.configure(
+          pid,
+          no_commands(remove_program_changes: true),
+          "in.mid",
+          "out.mid"
+        )
 
       MockMidiCleaner
       |> expect_read_file("in.mid")
@@ -55,7 +69,8 @@ defmodule MidiCleaner.FileProcessorTest do
     end
 
     test "all commands" do
-      {:ok, pid} = FileProcessor.new(config(), "in.mid", "out.mid")
+      {:ok, pid} = FileProcessor.start_link([])
+      :ok = FileProcessor.configure(pid, config(), "in.mid", "out.mid")
 
       MockMidiCleaner
       |> expect_read_file("in.mid")

@@ -6,12 +6,13 @@ defmodule MidiCleaner.FileProcessor do
 
   import MidiCleaner, only: [midi_cleaner: 0]
 
-  def process_file(config, infile, outfile) do
-    {:ok, pid} = new(config, infile, outfile)
-    {process(pid), pid}
+  alias MidiCleaner.Config
+
+  def start_link(_) do
+    GenServer.start_link(__MODULE__, %{})
   end
 
-  def new(config, infile, outfile) do
+  def configure(pid, %Config{} = config, infile, outfile) do
     state = %{
       config: config,
       infile: infile,
@@ -19,7 +20,13 @@ defmodule MidiCleaner.FileProcessor do
       status: :new
     }
 
-    GenServer.start_link(__MODULE__, state)
+    GenServer.call(pid, {:configure, state})
+  end
+
+  def process_file(config, infile, outfile) do
+    {:ok, pid} = start_link([])
+    configure(pid, config, infile, outfile)
+    {process(pid), pid}
   end
 
   def process(pid), do: GenServer.cast(pid, :process)
@@ -36,7 +43,12 @@ defmodule MidiCleaner.FileProcessor do
   end
 
   @impl true
-  def init(state), do: {:ok, state}
+  def init(state) do
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_call({:configure, new_state}, _from, _state), do: {:reply, :ok, new_state}
 
   @impl true
   def handle_call(:status, _from, state), do: {:reply, state.status, state}
