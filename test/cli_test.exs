@@ -4,7 +4,7 @@ defmodule MidiCleaner.CLITest do
 
   import Mox
 
-  alias MidiCleaner.{CLI, Config, MockRunner}
+  alias MidiCleaner.{CLI, Config, FileList, MockRunner}
 
   setup :verify_on_exit!
 
@@ -12,7 +12,7 @@ defmodule MidiCleaner.CLITest do
     MockRunner
     |> expect(:run, fn config ->
       assert config == %Config{
-               file_list: [],
+               file_list: FileList.new([]),
                output: nil,
                remove_program_changes: false,
                remove_unchanging_cc_val0: false,
@@ -26,7 +26,8 @@ defmodule MidiCleaner.CLITest do
   test "file list" do
     MockRunner
     |> expect(:run, fn config ->
-      assert config.file_list == ["example.mid", "midi/example.mid", "midi/examples"]
+      assert config.file_list ==
+               FileList.new(["example.mid", "midi/example.mid", "midi/examples"])
     end)
 
     CLI.main(["example.mid", "midi/example.mid", "midi/examples"])
@@ -72,11 +73,12 @@ defmodule MidiCleaner.CLITest do
     MockRunner
     |> expect(:run, fn config ->
       assert config == %Config{
-               file_list: [
-                 "midi/example1.mid",
-                 "orig/example2.mid",
-                 "midi/examples"
-               ],
+               file_list:
+                 FileList.new([
+                   "midi/example1.mid",
+                   "orig/example2.mid",
+                   "midi/examples"
+                 ]),
                output: "clean",
                remove_program_changes: true,
                remove_unchanging_cc_val0: true,

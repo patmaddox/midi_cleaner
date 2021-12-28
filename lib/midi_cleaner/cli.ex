@@ -2,12 +2,12 @@ defmodule MidiCleaner.CLI do
   alias MidiCleaner.Config
 
   def main(args) do
-    Config.new()
-    |> parse_options(args)
+    parse_options(args)
+    |> Config.new()
     |> run()
   end
 
-  defp parse_options(config, args) do
+  defp parse_options(args) do
     {options, file_list} =
       OptionParser.parse!(
         args,
@@ -19,8 +19,7 @@ defmodule MidiCleaner.CLI do
         ]
       )
 
-    config
-    |> Map.merge(Map.new(options))
+    Map.new(options)
     |> Map.put(:file_list, file_list)
   end
 
