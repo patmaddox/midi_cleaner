@@ -19,13 +19,10 @@ defmodule MidiCleaner.Runner do
 
   def run(%Config{} = config) do
     {:ok, pid} = new(config)
-    run(pid, :infinity)
-    wait(pid, :infinity)
+    :ok = run(pid, :infinity)
   end
 
   def run(pid, timeout \\ 5000), do: GenServer.call(pid, :run, timeout)
-
-  def wait(pid, timeout \\ 5000), do: GenServer.call(pid, :wait, timeout)
 
   def status(pid), do: GenServer.call(pid, :status)
 
@@ -41,18 +38,6 @@ defmodule MidiCleaner.Runner do
       {:reply, :ok, %{state | status: :running, processors: new_processors}}
     else
       errors -> {:reply, errors, %{state | status: errors}}
-    end
-  end
-
-  @impl true
-  def handle_call(:wait, _from, %{processors: processors, status: status} = state) do
-    case status do
-      {:error, _} ->
-        {:reply, status, state}
-
-      :running ->
-        Enum.each(processors, &file_processor().wait(&1))
-        {:reply, :ok, %{state | status: :ok, processors: []}}
     end
   end
 
@@ -73,9 +58,8 @@ defmodule MidiCleaner.Runner do
   defp process_files(config) do
     FileList.files(config.file_list)
     |> Task.async_stream(fn {infile, outfile} ->
-      {:ok, processor} = file_processor().process_file(config, infile, outfile)
-      processor
+      :ok = file_processor().process_file(config, infile, outfile)
     end)
-    |> Stream.map(fn {:ok, pid} -> pid end)
+    |> Enum.map(& &1)
   end
 end

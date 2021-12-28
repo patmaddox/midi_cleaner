@@ -39,8 +39,7 @@ defmodule MidiCleaner.FileProcessorTest do
       )
       |> allow(self(), pid)
 
-      FileProcessor.process(pid)
-      FileProcessor.wait(pid)
+      :ok = FileProcessor.process(pid)
     end
 
     test "a different command" do
@@ -64,8 +63,7 @@ defmodule MidiCleaner.FileProcessorTest do
       )
       |> allow(self(), pid)
 
-      FileProcessor.process(pid)
-      FileProcessor.wait(pid)
+      :ok = FileProcessor.process(pid)
     end
 
     test "all commands" do
@@ -80,8 +78,7 @@ defmodule MidiCleaner.FileProcessorTest do
       |> expect_write_file("in.mid", :after_set_midi_channel, "export/clean/out.mid")
       |> allow(self(), pid)
 
-      FileProcessor.process(pid)
-      FileProcessor.wait(pid)
+      :ok = FileProcessor.process(pid)
     end
   end
 

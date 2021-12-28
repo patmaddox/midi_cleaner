@@ -1,6 +1,5 @@
 defmodule MidiCleaner.FileProcessor do
   @callback process_file(MidiCleaner.Config.t(), String.t(), String.t()) :: :ok
-  @callback wait(Pid.t()) :: :ok
 
   use GenServer
 
@@ -26,21 +25,12 @@ defmodule MidiCleaner.FileProcessor do
   def process_file(config, infile, outfile) do
     {:ok, pid} = start_link([])
     configure(pid, config, infile, outfile)
-    {process(pid), pid}
+    process(pid)
   end
 
-  def process(pid), do: GenServer.cast(pid, :process)
+  def process(pid), do: GenServer.call(pid, :process)
 
   def status(pid), do: GenServer.call(pid, :status)
-
-  def wait(pid, interval \\ 100) do
-    if status(pid) == :done do
-      :ok
-    else
-      :timer.sleep(interval)
-      wait(pid, interval)
-    end
-  end
 
   @impl true
   def init(state) do
@@ -54,14 +44,14 @@ defmodule MidiCleaner.FileProcessor do
   def handle_call(:status, _from, state), do: {:reply, state.status, state}
 
   @impl true
-  def handle_cast(:process, %{config: config, infile: infile, outfile: outfile} = state) do
+  def handle_call(:process, _from, %{config: config, infile: infile, outfile: outfile} = state) do
     read_file(infile)
     |> maybe_remove_program_changes(config)
     |> maybe_remove_unchanging_cc_val0(config)
     |> maybe_set_midi_channel(config)
     |> write_file(outfile, config)
 
-    {:noreply, %{state | status: :done}}
+    {:reply, :ok, %{state | status: :done}}
   end
 
   defp read_file(filename), do: midi_cleaner().read_file(filename)
