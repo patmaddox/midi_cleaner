@@ -14,7 +14,9 @@ defmodule MidiCleaner.RunnerTest do
         config(file_list: [])
         |> new_runner()
 
-      assert {:error, _} = Runner.run(pid)
+      Runner.run(pid)
+      Runner.wait(pid)
+      assert {:error, _} = Runner.status(pid)
     end
 
     test "one file" do
@@ -24,7 +26,9 @@ defmodule MidiCleaner.RunnerTest do
       expect_make_dir("export/clean/.")
       expect_process_file(config, "example.mid", "example.mid")
 
-      assert :ok == Runner.run(pid)
+      Runner.run(pid)
+      Runner.wait(pid)
+      assert :ok == Runner.status(pid)
     end
 
     test "multiple files" do
@@ -36,7 +40,9 @@ defmodule MidiCleaner.RunnerTest do
       expect_process_file(config, "drums/1.mid", "drums/1.mid")
       expect_process_file(config, "bass/2.mid", "bass/2.mid")
 
-      assert :ok == Runner.run(pid)
+      Runner.run(pid)
+      Runner.wait(pid)
+      assert :ok == Runner.status(pid)
     end
 
     test "dir" do
@@ -47,14 +53,19 @@ defmodule MidiCleaner.RunnerTest do
       expect_process_file(config, "test/fixtures/midi/drums.mid", "midi/drums.mid")
       expect_process_file(config, "test/fixtures/midi/example.mid", "midi/example.mid")
 
-      assert :ok == Runner.run(pid)
+      Runner.run(pid)
+      Runner.wait(pid)
+      assert :ok == Runner.status(pid)
     end
   end
 
   defp new_runner(config) do
     {:ok, pid} = Runner.new(config)
+
     allow(MockMidiCleaner, self(), pid)
     allow(MockFileProcessor, self(), pid)
+    stub(MockFileProcessor, :wait, fn _ -> :ok end)
+
     pid
   end
 
@@ -75,7 +86,7 @@ defmodule MidiCleaner.RunnerTest do
 
   defp expect_process_file(config, infile, outfile) do
     expect(MockFileProcessor, :process_file, fn ^config, ^infile, ^outfile ->
-      {infile, :after_process_file}
+      {:ok, {infile, :after_process_file}}
     end)
   end
 end

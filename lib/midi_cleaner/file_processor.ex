@@ -1,5 +1,6 @@
 defmodule MidiCleaner.FileProcessor do
   @callback process_file(MidiCleaner.Config.t(), String.t(), String.t()) :: :ok
+  @callback wait(Pid.t()) :: :ok
 
   use GenServer
 
