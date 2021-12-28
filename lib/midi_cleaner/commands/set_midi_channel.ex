@@ -1,4 +1,4 @@
-defmodule MidiCleaner.SetMidiChannel do
+defmodule MidiCleaner.Commands.SetMidiChannel do
   alias MidiCleaner.Error
   alias Midifile.{Event, Sequence, Track}
 

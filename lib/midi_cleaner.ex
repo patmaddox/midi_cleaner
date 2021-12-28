@@ -7,7 +7,7 @@ defmodule MidiCleaner do
   @callback remove_unchanging_cc_val0(Midifile.Sequence.t()) :: :ok
   @callback set_midi_channel(Midifile.Sequence.t(), Integer.t()) :: :ok
 
-  alias MidiCleaner.{RemoveProgramChanges, RemoveUnchangingCcVal0, SetMidiChannel}
+  alias MidiCleaner.Commands.{RemoveProgramChanges, RemoveUnchangingCcVal0, SetMidiChannel}
 
   defmodule Error do
     defexception message: "A MidiCleaner error has occurred."

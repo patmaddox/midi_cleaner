@@ -1,4 +1,4 @@
-defmodule MidiCleaner.RemoveProgramChanges do
+defmodule MidiCleaner.Commands.RemoveProgramChanges do
   alias Midifile.{Event, Sequence, Track}
 
   def remove_program_changes(%Sequence{} = sequence) do

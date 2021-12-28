@@ -1,4 +1,4 @@
-defmodule MidiCleaner.RemoveUnchangingCcVal0 do
+defmodule MidiCleaner.Commands.RemoveUnchangingCcVal0 do
   alias Midifile.{Event, Sequence, Track}
 
   def remove_unchanging_cc_val0(%Sequence{} = sequence) do
