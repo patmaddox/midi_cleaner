@@ -2,7 +2,7 @@
 
 ## TODO
 
-* Refactor CLI... it went off the Rails when I went to multiple files
+* Handle input dirs
 * Correctly handle input dir with only one file (I think it fails)
 * Update typespecs (?) in @callback definitions
 * Review expected vs actual convention in ExUnit
