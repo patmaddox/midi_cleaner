@@ -1,7 +1,7 @@
 defmodule MidiCleaner.FileList do
   defstruct paths: []
 
-  def new(paths) do
+  def new(paths \\ []) do
     %__MODULE__{
       paths: Enum.map(paths, &file_or_dir_tuple/1)
     }
@@ -10,6 +10,8 @@ defmodule MidiCleaner.FileList do
   def each_file(%{paths: paths}, func), do: Enum.each(paths, &process_path(&1, func))
 
   def each_parent_dir(%{paths: paths}, func), do: set_of_parent_dirs(paths) |> Enum.each(func)
+
+  def empty?(%{paths: paths}), do: Enum.empty?(paths)
 
   defp file_or_dir_tuple(path) do
     if Path.extname(path) == ".mid" do

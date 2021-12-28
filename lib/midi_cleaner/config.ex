@@ -1,4 +1,6 @@
 defmodule MidiCleaner.Config do
+  alias MidiCleaner.FileList
+
   defstruct file_list: [],
             output: nil,
             remove_program_changes: false,
@@ -8,6 +10,7 @@ defmodule MidiCleaner.Config do
   def new(overrides \\ %{}) do
     %__MODULE__{}
     |> Map.merge(overrides)
+    |> Map.update(:file_list, FileList.new(), &FileList.new/1)
   end
 
   def validate(config) do
@@ -21,10 +24,13 @@ defmodule MidiCleaner.Config do
     end
   end
 
-  defp validate_file_list(errors, %{file_list: file_list}) when length(file_list) == 0,
-    do: [:no_file_list | errors]
-
-  defp validate_file_list(errors, _), do: errors
+  defp validate_file_list(errors, %{file_list: file_list}) do
+    if FileList.empty?(file_list) do
+      [:no_file_list | errors]
+    else
+      errors
+    end
+  end
 
   defp validate_output(errors, %{output: output}) when is_nil(output), do: [:no_output | errors]
   defp validate_output(errors, _), do: errors

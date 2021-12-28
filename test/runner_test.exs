@@ -80,11 +80,6 @@ defmodule MidiCleaner.RunnerTest do
       config = config(file_list: ["1.mid", "2.mid"])
       assert :ok == Runner.run(config)
     end
-
-    @tag :skip
-    test "full config" do
-      assert :ok == Runner.run(config())
-    end
   end
 
   defp config(overrides) do

@@ -1,11 +1,11 @@
 defmodule MidiCleaner.Runner do
   @callback run(Map.t()) :: :ok
 
-  alias MidiCleaner.Config
+  alias MidiCleaner.{Config, FileList}
 
   def run(config) do
     with :ok <- Config.validate(config) do
-      Enum.each(config.file_list, fn filename ->
+      FileList.each_file(config.file_list, fn filename ->
         read_file(filename)
         |> maybe_remove_program_changes(config)
         |> maybe_remove_unchanging_cc_val0(config)
