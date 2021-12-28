@@ -3,7 +3,7 @@ defmodule MidiCleaner.Runner do
 
   use GenServer
 
-  import MidiCleaner, only: [midi_cleaner: 0]
+  import MidiCleaner, only: [midi_cleaner: 0, file_processor: 0]
 
   alias MidiCleaner.{Config, FileList}
 
@@ -35,17 +35,8 @@ defmodule MidiCleaner.Runner do
   @impl true
   def handle_call(:run, _from, %{config: config} = state) do
     with :ok <- Config.validate(config) do
-      FileList.dirs(config.file_list)
-      |> Task.async_stream(&make_output_dir(&1, config))
-      |> Enum.each(& &1)
-
-      new_processors =
-        FileList.files(config.file_list)
-        |> Task.async_stream(fn {infile, outfile} ->
-          {:ok, processor} = file_processor().process_file(config, infile, outfile)
-          processor
-        end)
-        |> Stream.map(fn {:ok, pid} -> pid end)
+      make_output_dirs(config)
+      new_processors = process_files(config)
 
       {:reply, :ok, %{state | status: :running, processors: new_processors}}
     else
@@ -70,10 +61,21 @@ defmodule MidiCleaner.Runner do
     {:reply, status, state}
   end
 
-  defp make_output_dir(dir, config) do
-    output_dir = Path.join(config.output, dir)
-    midi_cleaner().make_dir(output_dir)
+  defp make_output_dirs(config) do
+    FileList.dirs(config.file_list)
+    |> Task.async_stream(fn dir ->
+      output_dir = Path.join(config.output, dir)
+      midi_cleaner().make_dir(output_dir)
+    end)
+    |> Enum.each(& &1)
   end
 
-  defp file_processor(), do: Application.get_env(:midi_cleaner, :file_processor)
+  defp process_files(config) do
+    FileList.files(config.file_list)
+    |> Task.async_stream(fn {infile, outfile} ->
+      {:ok, processor} = file_processor().process_file(config, infile, outfile)
+      processor
+    end)
+    |> Stream.map(fn {:ok, pid} -> pid end)
+  end
 end

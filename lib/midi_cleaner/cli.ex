@@ -1,10 +1,12 @@
 defmodule MidiCleaner.CLI do
+  import MidiCleaner, only: [runner: 0]
+
   alias MidiCleaner.Config
 
   def main(args) do
     parse_options(args)
     |> Config.new()
-    |> run()
+    |> runner().run()
   end
 
   defp parse_options(args) do
@@ -21,9 +23,5 @@ defmodule MidiCleaner.CLI do
 
     Map.new(options)
     |> Map.put(:file_list, file_list)
-  end
-
-  defp run(config) do
-    Application.get_env(:midi_cleaner, :runner).run(config)
   end
 end

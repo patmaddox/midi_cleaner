@@ -27,4 +27,8 @@ defmodule MidiCleaner do
   def make_dir(dir), do: File.mkdir_p!(dir)
 
   def midi_cleaner(), do: Application.get_env(:midi_cleaner, :midi_cleaner)
+
+  def file_processor(), do: Application.get_env(:midi_cleaner, :file_processor)
+
+  def runner(), do: Application.get_env(:midi_cleaner, :runner)
 end
