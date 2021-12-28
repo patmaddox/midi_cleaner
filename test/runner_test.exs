@@ -16,17 +16,12 @@ defmodule MidiCleaner.RunnerTest do
 
     test "one file, one command" do
       MockMidiCleaner
-      |> expect_read_file("example.mid", :sequence_after_read_file)
-      |> expect_remove_unchanging_cc_val0(
-        "example.mid",
-        :sequence_after_read_file,
-        :sequence_after_remove_unchanging_cc_val0
-      )
+      |> expect_read_file("example.mid")
+      |> expect_remove_unchanging_cc_val0("example.mid", :after_read_file)
       |> expect_write_file(
         "example.mid",
-        :sequence_after_remove_unchanging_cc_val0,
-        "export/clean/example.mid",
-        :after_write_file
+        :after_remove_unchanging_cc_val0,
+        "export/clean/example.mid"
       )
 
       config =
@@ -40,17 +35,12 @@ defmodule MidiCleaner.RunnerTest do
 
     test "one file, different command" do
       MockMidiCleaner
-      |> expect_read_file("example.mid", :sequence_after_read_file)
-      |> expect_remove_program_changes(
-        "example.mid",
-        :sequence_after_read_file,
-        :sequence_after_remove_program_changes
-      )
+      |> expect_read_file("example.mid")
+      |> expect_remove_program_changes("example.mid", :after_read_file)
       |> expect_write_file(
         "example.mid",
-        :sequence_after_remove_program_changes,
-        "export/clean/example.mid",
-        :after_write_file
+        :after_remove_program_changes,
+        "export/clean/example.mid"
       )
 
       config =
@@ -64,29 +54,11 @@ defmodule MidiCleaner.RunnerTest do
 
     test "one file, all commands" do
       MockMidiCleaner
-      |> expect_read_file("example.mid", :sequence_after_read_file)
-      |> expect_remove_program_changes(
-        "example.mid",
-        :sequence_after_read_file,
-        :sequence_after_remove_program_changes
-      )
-      |> expect_remove_unchanging_cc_val0(
-        "example.mid",
-        :sequence_after_remove_program_changes,
-        :sequence_after_remove_unchanging_cc_val0
-      )
-      |> expect_set_midi_channel(
-        "example.mid",
-        :sequence_after_remove_unchanging_cc_val0,
-        0,
-        :sequence_after_set_midi_channel
-      )
-      |> expect_write_file(
-        "example.mid",
-        :sequence_after_set_midi_channel,
-        "export/clean/example.mid",
-        :after_write_file
-      )
+      |> expect_read_file("example.mid")
+      |> expect_remove_program_changes("example.mid", :after_read_file)
+      |> expect_remove_unchanging_cc_val0("example.mid", :after_remove_program_changes)
+      |> expect_set_midi_channel("example.mid", :after_remove_unchanging_cc_val0, 0)
+      |> expect_write_file("example.mid", :after_set_midi_channel, "export/clean/example.mid")
 
       config = config(file_list: ["example.mid"])
       assert :ok == Runner.run(config)
@@ -94,52 +66,16 @@ defmodule MidiCleaner.RunnerTest do
 
     test "multiple files" do
       MockMidiCleaner
-      |> expect_read_file("1.mid", :sequence_after_read_file)
-      |> expect_remove_program_changes(
-        "1.mid",
-        :sequence_after_read_file,
-        :sequence_after_remove_program_changes
-      )
-      |> expect_remove_unchanging_cc_val0(
-        "1.mid",
-        :sequence_after_remove_program_changes,
-        :sequence_after_remove_unchanging_cc_val0
-      )
-      |> expect_set_midi_channel(
-        "1.mid",
-        :sequence_after_remove_unchanging_cc_val0,
-        0,
-        :sequence_after_set_midi_channel
-      )
-      |> expect_write_file(
-        "1.mid",
-        :sequence_after_set_midi_channel,
-        "export/clean/1.mid",
-        :after_write_file
-      )
-      |> expect_read_file("2.mid", :sequence_after_read_file)
-      |> expect_remove_program_changes(
-        "2.mid",
-        :sequence_after_read_file,
-        :sequence_after_remove_program_changes
-      )
-      |> expect_remove_unchanging_cc_val0(
-        "2.mid",
-        :sequence_after_remove_program_changes,
-        :sequence_after_remove_unchanging_cc_val0
-      )
-      |> expect_set_midi_channel(
-        "2.mid",
-        :sequence_after_remove_unchanging_cc_val0,
-        0,
-        :sequence_after_set_midi_channel
-      )
-      |> expect_write_file(
-        "2.mid",
-        :sequence_after_set_midi_channel,
-        "export/clean/2.mid",
-        :after_write_file
-      )
+      |> expect_read_file("1.mid")
+      |> expect_remove_program_changes("1.mid", :after_read_file)
+      |> expect_remove_unchanging_cc_val0("1.mid", :after_remove_program_changes)
+      |> expect_set_midi_channel("1.mid", :after_remove_unchanging_cc_val0, 0)
+      |> expect_write_file("1.mid", :after_set_midi_channel, "export/clean/1.mid")
+      |> expect_read_file("2.mid")
+      |> expect_remove_program_changes("2.mid", :after_read_file)
+      |> expect_remove_unchanging_cc_val0("2.mid", :after_remove_program_changes)
+      |> expect_set_midi_channel("2.mid", :after_remove_unchanging_cc_val0, 0)
+      |> expect_write_file("2.mid", :after_set_midi_channel, "export/clean/2.mid")
 
       config = config(file_list: ["1.mid", "2.mid"])
       assert :ok == Runner.run(config)
@@ -172,22 +108,30 @@ defmodule MidiCleaner.RunnerTest do
     |> config()
   end
 
-  defp expect_read_file(mock, filename, result),
-    do: expect(mock, :read_file, fn ^filename -> {filename, result} end)
+  defp expect_read_file(mock, filename),
+    do: expect(mock, :read_file, fn ^filename -> {filename, :after_read_file} end)
 
-  defp expect_remove_program_changes(mock, filename, sequence, result),
-    do: expect(mock, :remove_program_changes, fn {^filename, ^sequence} -> {filename, result} end)
-
-  defp expect_remove_unchanging_cc_val0(mock, filename, sequence, result),
+  defp expect_remove_program_changes(mock, filename, sequence),
     do:
-      expect(mock, :remove_unchanging_cc_val0, fn {^filename, ^sequence} -> {filename, result} end)
-
-  defp expect_set_midi_channel(mock, filename, sequence, channel, result),
-    do:
-      expect(mock, :set_midi_channel, fn {^filename, ^sequence}, ^channel ->
-        {filename, result}
+      expect(mock, :remove_program_changes, fn {^filename, ^sequence} ->
+        {filename, :after_remove_program_changes}
       end)
 
-  defp expect_write_file(mock, filename, sequence, outfile, result),
-    do: expect(mock, :write_file, fn {^filename, ^sequence}, ^outfile -> {filename, result} end)
+  defp expect_remove_unchanging_cc_val0(mock, filename, sequence),
+    do:
+      expect(mock, :remove_unchanging_cc_val0, fn {^filename, ^sequence} ->
+        {filename, :after_remove_unchanging_cc_val0}
+      end)
+
+  defp expect_set_midi_channel(mock, filename, sequence, channel),
+    do:
+      expect(mock, :set_midi_channel, fn {^filename, ^sequence}, ^channel ->
+        {filename, :after_set_midi_channel}
+      end)
+
+  defp expect_write_file(mock, filename, sequence, outfile),
+    do:
+      expect(mock, :write_file, fn {^filename, ^sequence}, ^outfile ->
+        {filename, :after_write_file}
+      end)
 end
