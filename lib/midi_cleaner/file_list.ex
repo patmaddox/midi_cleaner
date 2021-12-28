@@ -9,7 +9,7 @@ defmodule MidiCleaner.FileList do
 
   def each_file(%{paths: paths}, func), do: Enum.each(paths, &process_path(&1, func))
 
-  def each_parent_dir(%{paths: paths}, func), do: set_of_parent_dirs(paths) |> Enum.each(func)
+  def each_dir(%{paths: paths}, func), do: set_of_dirs(paths) |> Enum.each(func)
 
   def empty?(%{paths: paths}), do: Enum.empty?(paths)
 
@@ -21,31 +21,31 @@ defmodule MidiCleaner.FileList do
     end
   end
 
-  defp process_path({:file, path}, func), do: func.(path)
+  defp process_path({:file, path}, func), do: func.({path, path})
 
   defp process_path({:dir, path}, func) do
     Path.wildcard("#{path}/**/*.mid")
-    |> Enum.each(&process_path({:file, &1}, func))
+    |> Enum.each(&func.({&1, Path.relative_to(&1, path)}))
   end
 
-  defp set_of_parent_dirs(paths), do: set_of_parent_dirs(MapSet.new(), paths)
+  defp set_of_dirs(paths), do: set_of_dirs(MapSet.new(), paths)
 
-  defp set_of_parent_dirs(parent_dirs, []), do: parent_dirs
+  defp set_of_dirs(dirs, []), do: dirs
 
-  defp set_of_parent_dirs(parent_dirs, [{:file, path} | rest]) do
-    parent_dirs
-    |> add_parent_dir(path)
-    |> set_of_parent_dirs(rest)
+  defp set_of_dirs(dirs, [{:file, path} | rest]) do
+    dirs
+    |> add_dir(path)
+    |> set_of_dirs(rest)
   end
 
-  defp set_of_parent_dirs(parent_dirs, [{:dir, path} | rest]) do
+  defp set_of_dirs(dirs, [{:dir, path} | rest]) do
     Path.wildcard("#{path}/**/*.mid")
-    |> Enum.reduce(parent_dirs, &add_parent_dir/2)
-    |> set_of_parent_dirs(rest)
+    |> Stream.map(&Path.relative_to(&1, path))
+    |> Enum.reduce(dirs, &add_dir/2)
+    |> set_of_dirs(rest)
   end
 
-  defp add_parent_dir(%MapSet{} = parent_dirs, path),
-    do: MapSet.put(parent_dirs, Path.dirname(path))
+  defp add_dir(%MapSet{} = dirs, path), do: MapSet.put(dirs, Path.dirname(path))
 
-  defp add_parent_dir(path, %MapSet{} = parent_dirs), do: add_parent_dir(parent_dirs, path)
+  defp add_dir(path, %MapSet{} = dirs), do: add_dir(dirs, path)
 end

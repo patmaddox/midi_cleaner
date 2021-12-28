@@ -5,14 +5,14 @@ defmodule MidiCleaner.Runner do
 
   def run(config) do
     with :ok <- Config.validate(config) do
-      Config.each_parent_dir(config, &make_output_dir(&1, config))
+      Config.each_dir(config, &make_output_dir(&1, config))
 
-      Config.each_file(config, fn filename ->
-        read_file(filename)
+      Config.each_file(config, fn {infile, outfile} ->
+        read_file(infile)
         |> maybe_remove_program_changes(config)
         |> maybe_remove_unchanging_cc_val0(config)
         |> maybe_set_midi_channel(config)
-        |> write_file(filename, config)
+        |> write_file(outfile, config)
       end)
 
       :ok
@@ -44,7 +44,7 @@ defmodule MidiCleaner.Runner do
   defp maybe_set_midi_channel(sequence, _config), do: sequence
 
   defp make_output_dir(dir, config) do
-    output_dir = "#{config.output}/#{dir}"
+    output_dir = Path.join(config.output, dir)
     midi_cleaner().make_dir(output_dir)
   end
 

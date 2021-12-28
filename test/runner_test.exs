@@ -85,6 +85,33 @@ defmodule MidiCleaner.RunnerTest do
       config = config(file_list: ["drums/1.mid", "bass/2.mid"])
       assert :ok == Runner.run(config)
     end
+
+    test "dir, one command" do
+      MockMidiCleaner
+      |> expect_make_dir("export/clean/midi")
+      |> expect_read_file("test/fixtures/midi/drums.mid")
+      |> expect_remove_unchanging_cc_val0("test/fixtures/midi/drums.mid", :after_read_file)
+      |> expect_write_file(
+        "test/fixtures/midi/drums.mid",
+        :after_remove_unchanging_cc_val0,
+        "export/clean/midi/drums.mid"
+      )
+      |> expect_read_file("test/fixtures/midi/example.mid")
+      |> expect_remove_unchanging_cc_val0("test/fixtures/midi/example.mid", :after_read_file)
+      |> expect_write_file(
+        "test/fixtures/midi/example.mid",
+        :after_remove_unchanging_cc_val0,
+        "export/clean/midi/example.mid"
+      )
+
+      config =
+        no_commands(
+          file_list: ["test/fixtures"],
+          remove_unchanging_cc_val0: true
+        )
+
+      assert :ok == Runner.run(config)
+    end
   end
 
   defp config(overrides) do
