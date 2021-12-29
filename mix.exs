@@ -31,7 +31,6 @@ defmodule MidiCleaner.MixProject do
   defp escript do
     [
       main_module: MidiCleaner.CLI,
-      app: nil,
       path: "escript/midi_cleaner"
     ]
   end

@@ -4,6 +4,8 @@ defmodule MidiCleaner do
   @callback make_dir(String.t()) :: :ok
   @callback process(MidiFile.Sequence.t(), List.t()) :: :ok
 
+  alias MidiCleaner.DirTree
+
   defmodule Error do
     defexception message: "A MidiCleaner error has occurred."
   end
@@ -12,7 +14,7 @@ defmodule MidiCleaner do
 
   def write_file(sequence, filename), do: Midifile.write(sequence, filename)
 
-  def make_dir(dir), do: File.mkdir_p!(dir)
+  def make_dir(dir), do: DirTree.mkdir_p(dir)
 
   def midi_cleaner(), do: Application.get_env(:midi_cleaner, :midi_cleaner)
 
@@ -27,8 +29,7 @@ defmodule MidiCleaner do
   def process(%{tracks: tracks} = sequence, processors) do
     tracks =
       tracks
-      |> Task.async_stream(&process_track(&1, processors))
-      |> Enum.map(fn {:ok, track} -> track end)
+      |> Enum.map(&process_track(&1, processors))
 
     %{sequence | tracks: tracks}
   end
@@ -47,7 +48,7 @@ defmodule MidiCleaner do
     events =
       events
       |> Stream.map(&process_event(&1, processors))
-      |> Stream.reject(& &1 == :drop)
+      |> Stream.reject(&(&1 == :drop))
       |> Enum.map(& &1)
 
     %{track | events: events}

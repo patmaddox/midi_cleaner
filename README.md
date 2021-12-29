@@ -29,7 +29,6 @@ Computers refer to MIDI channels 0-15, and MidiCleaner currently uses this conve
 
 ## TODO
 
-* Stream sequence events rather than iterate over them multiple times
 * Update typespecs (?) in @callback definitions
 * Review expected vs actual convention in ExUnit
 * Report results
