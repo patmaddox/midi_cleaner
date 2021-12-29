@@ -41,7 +41,7 @@ defmodule MidiCleaner do
         Kernel.function_exported?(processor, :preview_event, 2)
       end)
 
-    preview_processors = preview_events(events, preview_processors)
+    preview_processors = preview_events(events, preview_processors, %{})
     simple_processors = Enum.map(simple_processors, &{&1, []})
     processors = Enum.concat(preview_processors, simple_processors)
 
@@ -54,28 +54,27 @@ defmodule MidiCleaner do
     %{track | events: events}
   end
 
-  defp preview_events(events, processors) do
-    Enum.reduce(events, %{}, fn event, processor_args ->
-      preview_event(event, processors, processor_args)
-    end)
-    |> Map.to_list()
+  defp preview_events([], _, processor_args), do: processor_args |> Map.to_list()
+
+  defp preview_events([event | rest], processors, processor_args) do
+    new_processor_args = preview_event(event, processors, processor_args)
+    preview_events(rest, processors, new_processor_args)
   end
 
-  defp preview_event(event, processors, processor_args) do
-    Enum.reduce(processors, processor_args, fn processor, processor_args ->
-      current_args = processor_args[processor] || :preview_event
-      args = apply(processor, :preview_event, [event, current_args])
-      Map.put(processor_args, processor, args)
-    end)
+  defp preview_event(_event, [], processor_args), do: processor_args
+
+  defp preview_event(event, [processor | rest], processor_args) do
+    current_args = processor_args[processor] || :preview_event
+    args = apply(processor, :preview_event, [event, current_args])
+    new_processor_args = Map.put(processor_args, processor, args)
+    preview_event(event, rest, new_processor_args)
   end
 
-  defp process_event(event, processors) do
-    Enum.reduce(processors, event, fn {processor, args}, e ->
-      if e == :drop do
-        :drop
-      else
-        apply(processor, :process_event, [e | args])
-      end
-    end)
+  defp process_event(:drop, _), do: :drop
+  defp process_event(event, []), do: event
+
+  defp process_event(event, [{processor, args} | rest]) do
+    apply(processor, :process_event, [event | args])
+    |> process_event(rest)
   end
 end
