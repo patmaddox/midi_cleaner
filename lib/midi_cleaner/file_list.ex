@@ -22,8 +22,24 @@ defmodule MidiCleaner.FileList do
     |> Stream.run()
   end
 
+  def each_dir(%{files: files, dirs: dirs}, func) do
+    files_stream = Stream.map(files, &Path.dirname(&1))
+    dirs_stream = Stream.flat_map(dirs, &list_dirs/1)
+
+    Stream.concat(files_stream, dirs_stream)
+    |> MapSet.new()
+    |> Task.async_stream(func)
+    |> Stream.run()
+  end
+
   defp list_files(dir) do
     Path.wildcard("#{dir}/**/*.mid")
     |> Stream.map(&{&1, Path.relative_to(&1, dir)})
+  end
+
+  defp list_dirs(dir) do
+    Path.wildcard("#{dir}/**/*.mid")
+    |> Stream.map(&Path.dirname/1)
+    |> Stream.map(&Path.relative_to(&1, dir))
   end
 end

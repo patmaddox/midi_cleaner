@@ -40,4 +40,38 @@ defmodule MidiCleaner.FileListTest do
       assert_received({"test/fixtures/midi/example.mid", "midi/example.mid"})
     end
   end
+
+  describe "each_dir()" do
+    test "list of midi files" do
+      pid = self()
+
+      ["1.mid", "2.mid"]
+      |> FileList.new()
+      |> FileList.each_dir(&send(pid, &1))
+
+      assert_received(".")
+    end
+
+    test "dir" do
+      pid = self()
+
+      ["test/fixtures"]
+      |> FileList.new()
+      |> FileList.each_dir(&send(pid, &1))
+
+      assert_received("midi")
+    end
+
+    test "files and dirs mixed" do
+      pid = self()
+
+      ["1.mid", "files/2.mid", "test/fixtures"]
+      |> FileList.new()
+      |> FileList.each_dir(&send(pid, &1))
+
+      assert_received(".")
+      assert_received("files")
+      assert_received("midi")
+    end
+  end
 end
