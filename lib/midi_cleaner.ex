@@ -29,6 +29,7 @@ defmodule MidiCleaner do
       tracks
       |> Task.async_stream(&process_track(&1, processors))
       |> Enum.map(fn {:ok, track} -> track end)
+
     %{sequence | tracks: tracks}
   end
 

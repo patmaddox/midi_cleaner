@@ -23,29 +23,26 @@ defmodule MidiCleaner.Runner do
   @impl true
   def handle_call(:run, _from, config) do
     with :ok <- Config.validate(config) do
-      make_output_dirs(config)
       process_files(config)
-
       {:reply, :ok, config}
     else
       errors -> {:reply, errors, config}
     end
   end
 
-  defp make_output_dirs(config) do
-    FileList.dirs(config.file_list)
-    |> Task.async_stream(fn dir ->
-      output_dir = Path.join(config.output, dir)
-      midi_cleaner().make_dir(output_dir)
-    end)
-    |> Enum.each(& &1)
-  end
-
-  defp process_files(config) do
-    FileList.files(config.file_list)
-    |> Task.async_stream(fn {infile, outfile} ->
+  defp process_files(%{file_list: file_list, output: output} = config) do
+    FileList.each_file(file_list, fn {infile, outfile} ->
+      make_output_dir(outfile, output)
       :ok = file_processor().process_file(config, infile, outfile)
     end)
-    |> Enum.each(& &1)
+  end
+
+  defp make_output_dir(file, output) do
+    parent_dir =
+      Path.dirname(file)
+      |> Path.relative_to(output)
+
+    Path.join(output, parent_dir)
+    |> midi_cleaner().make_dir()
   end
 end
