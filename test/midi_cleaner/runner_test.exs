@@ -17,36 +17,12 @@ defmodule MidiCleaner.RunnerTest do
       assert {:error, _} = Runner.run(pid)
     end
 
-    test "one file" do
-      config = config(file_list: ["example.mid"])
-      pid = new_runner(config)
-
-      expect_make_dir("export/clean/.")
-      expect_process_file(config, "example.mid", "example.mid")
-
-      assert :ok == Runner.run(pid)
-    end
-
-    test "multiple files" do
-      config = config(file_list: ["drums/1.mid", "bass/2.mid"])
+    test "success" do
+      config = config(file_list: ["drums/example.mid"])
       pid = new_runner(config)
 
       expect_make_dir("export/clean/drums")
-      expect_make_dir("export/clean/bass")
-      expect_process_file(config, "drums/1.mid", "drums/1.mid")
-      expect_process_file(config, "bass/2.mid", "bass/2.mid")
-
-      assert :ok == Runner.run(pid)
-    end
-
-    test "dir" do
-      config = config(file_list: ["test/fixtures"])
-      pid = new_runner(config)
-
-      expect_make_dir("export/clean/midi")
-      expect_make_dir("export/clean/midi")
-      expect_process_file(config, "test/fixtures/midi/drums.mid", "midi/drums.mid")
-      expect_process_file(config, "test/fixtures/midi/example.mid", "midi/example.mid")
+      expect_process_file(config, "drums/example.mid", "drums/example.mid")
 
       assert :ok == Runner.run(pid)
     end
