@@ -30,13 +30,37 @@ defmodule MidiCleaner do
   end
 
   defp process_track(%{events: events} = track, processors) do
-    processors = Enum.map(processors, &{&1, &1.preview_events(events)})
+    {preview_processors, simple_processors} =
+      Enum.split_with(processors, fn processor ->
+        Code.ensure_loaded(processor)
+        Kernel.function_exported?(processor, :preview_event, 2)
+      end)
+
+    preview_processors = preview_events(events, preview_processors)
+    simple_processors = Enum.map(simple_processors, &{&1, []})
+    processors = Enum.concat(preview_processors, simple_processors)
 
     events =
-      Enum.map(events, &process_event(&1, processors))
-      |> Enum.reject(&(&1 == :drop))
+      Stream.map(events, &process_event(&1, processors))
+      |> Stream.reject(&(&1 == :drop))
+      |> Enum.map(& &1)
 
     %{track | events: events}
+  end
+
+  defp preview_events(events, processors) do
+    Enum.reduce(events, %{}, fn event, processor_args ->
+      preview_event(event, processors, processor_args)
+    end)
+    |> Map.to_list()
+  end
+
+  defp preview_event(event, processors, processor_args) do
+    Enum.reduce(processors, processor_args, fn processor, processor_args ->
+      current_args = processor_args[processor] || :preview_event
+      args = apply(processor, :preview_event, [event, current_args])
+      Map.put(processor_args, processor, args)
+    end)
   end
 
   defp process_event(event, processors) do

@@ -1,7 +1,15 @@
 defmodule MidiCleaner.Commands.RemoveUnchangingCcVal0 do
   alias Midifile.Event
 
-  def preview_events(events), do: [controls_to_keep(events)]
+  def preview_event(event, :preview_event), do: preview_event(event, [MapSet.new()])
+
+  def preview_event(event, [controls_to_keep] = args) do
+    if keep_control?(event) do
+      [MapSet.put(controls_to_keep, cc(event))]
+    else
+      args
+    end
+  end
 
   def process_event(event, controls_to_keep) do
     if keep_event?(event, controls_to_keep) do
@@ -9,13 +17,6 @@ defmodule MidiCleaner.Commands.RemoveUnchangingCcVal0 do
     else
       :drop
     end
-  end
-
-  defp controls_to_keep(events) do
-    events
-    |> Stream.filter(&keep_control?/1)
-    |> Stream.map(&cc/1)
-    |> MapSet.new()
   end
 
   defp keep_control?(%Event{symbol: :controller, bytes: [_, _, val]}) when val > 0, do: true

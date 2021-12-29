@@ -9,8 +9,6 @@ defmodule MidiCleaner.Commands.SetMidiChannel do
         alias Midifile.Event
         @new_channel new_channel
 
-        def preview_events(_), do: []
-
         def process_event(event) do
           if Event.channel?(event) do
             [first | rest] = event.bytes
