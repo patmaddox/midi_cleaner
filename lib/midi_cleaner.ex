@@ -25,7 +25,10 @@ defmodule MidiCleaner do
   end
 
   def process(%{tracks: tracks} = sequence, processors) do
-    tracks = Enum.map(tracks, &process_track(&1, processors))
+    tracks =
+      tracks
+      |> Task.async_stream(&process_track(&1, processors))
+      |> Enum.map(fn {:ok, track} -> track end)
     %{sequence | tracks: tracks}
   end
 
@@ -41,9 +44,10 @@ defmodule MidiCleaner do
     processors = Enum.concat(preview_processors, simple_processors)
 
     events =
-      Stream.map(events, &process_event(&1, processors))
-      |> Stream.reject(&(&1 == :drop))
-      |> Enum.map(& &1)
+      events
+      |> Task.async_stream(&process_event(&1, processors))
+      |> Stream.reject(fn {:ok, event} -> event == :drop end)
+      |> Enum.map(fn {:ok, event} -> event end)
 
     %{track | events: events}
   end
