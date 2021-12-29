@@ -64,9 +64,7 @@ defmodule MidiCleaner.RunnerTest do
     %{
       file_list: ["example.mid", "files/example.mid", "example/midi"],
       output: "export/clean",
-      remove_program_changes: true,
-      remove_unchanging_cc_val0: true,
-      set_midi_channel: 0
+      processors: [Foo, Bar, Baz]
     }
     |> Map.merge(Map.new(overrides))
     |> Config.new()

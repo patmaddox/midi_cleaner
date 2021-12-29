@@ -5,6 +5,7 @@ defmodule MidiCleaner.CLITest do
   import Mox
 
   alias MidiCleaner.{CLI, Config, FileList, MockRunner}
+  alias MidiCleaner.Commands.{RemoveProgramChanges, RemoveUnchangingCcVal0, SetMidiChannel0}
 
   setup :verify_on_exit!
 
@@ -14,9 +15,7 @@ defmodule MidiCleaner.CLITest do
       assert config == %Config{
                file_list: FileList.new([]),
                output: nil,
-               remove_program_changes: false,
-               remove_unchanging_cc_val0: false,
-               set_midi_channel: nil
+               processors: []
              }
     end)
 
@@ -45,7 +44,7 @@ defmodule MidiCleaner.CLITest do
   test "--remove-program-changes" do
     MockRunner
     |> expect(:run, fn config ->
-      assert config.remove_program_changes
+      assert config.processors == [RemoveProgramChanges]
     end)
 
     CLI.main(["--remove-program-changes"])
@@ -54,7 +53,7 @@ defmodule MidiCleaner.CLITest do
   test "--remove-unchanging-cc-val0" do
     MockRunner
     |> expect(:run, fn config ->
-      assert config.remove_unchanging_cc_val0
+      assert config.processors == [RemoveUnchangingCcVal0]
     end)
 
     CLI.main(["--remove-unchanging-cc-val0"])
@@ -63,7 +62,7 @@ defmodule MidiCleaner.CLITest do
   test "--set-midi-channel=0" do
     MockRunner
     |> expect(:run, fn config ->
-      assert config.set_midi_channel == 0
+      assert config.processors == [SetMidiChannel0]
     end)
 
     CLI.main(["--set-midi-channel=0"])
@@ -80,9 +79,7 @@ defmodule MidiCleaner.CLITest do
                    "midi/examples"
                  ]),
                output: "clean",
-               remove_program_changes: true,
-               remove_unchanging_cc_val0: true,
-               set_midi_channel: 0
+               processors: [SetMidiChannel0, RemoveUnchangingCcVal0, RemoveProgramChanges]
              }
     end)
 

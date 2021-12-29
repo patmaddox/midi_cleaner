@@ -41,9 +41,7 @@ defmodule MidiCleaner.FileProcessor do
   @impl true
   def handle_call(:process, _from, %{config: config, infile: infile, outfile: outfile} = state) do
     read_file(infile)
-    |> maybe_remove_program_changes(config)
-    |> maybe_remove_unchanging_cc_val0(config)
-    |> maybe_set_midi_channel(config)
+    |> process(config)
     |> write_file(outfile, config)
 
     {:reply, :ok, state}
@@ -51,23 +49,12 @@ defmodule MidiCleaner.FileProcessor do
 
   defp read_file(filename), do: midi_cleaner().read_file(filename)
 
+  defp process(sequence, %{processors: processors}) do
+    midi_cleaner().process(sequence, processors)
+  end
+
   defp write_file(sequence, filename, config) do
     filename = Enum.join([config.output, filename], "/")
     midi_cleaner().write_file(sequence, filename)
   end
-
-  defp maybe_remove_program_changes(sequence, %{remove_program_changes: true}),
-    do: midi_cleaner().remove_program_changes(sequence)
-
-  defp maybe_remove_program_changes(sequence, _config), do: sequence
-
-  defp maybe_remove_unchanging_cc_val0(sequence, %{remove_unchanging_cc_val0: true}),
-    do: midi_cleaner().remove_unchanging_cc_val0(sequence)
-
-  defp maybe_remove_unchanging_cc_val0(sequence, _config), do: sequence
-
-  defp maybe_set_midi_channel(sequence, %{set_midi_channel: ch}) when is_integer(ch),
-    do: midi_cleaner().set_midi_channel(sequence, ch)
-
-  defp maybe_set_midi_channel(sequence, _config), do: sequence
 end

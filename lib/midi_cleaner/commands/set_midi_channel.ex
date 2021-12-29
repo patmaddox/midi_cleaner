@@ -1,33 +1,33 @@
 defmodule MidiCleaner.Commands.SetMidiChannel do
   alias MidiCleaner.Error
-  alias Midifile.{Event, Sequence, Track}
 
-  def set_midi_channel(%Sequence{} = sequence, channel) when channel >= 0 and channel <= 15 do
-    %{sequence | tracks: set_track_midi_channel(sequence.tracks, channel)}
-  end
+  def make_processor(new_channel) when new_channel >= 0 and new_channel <= 15 do
+    channel_module = String.to_atom("Elixir.MidiCleaner.Commands.SetMidiChannel#{new_channel}")
 
-  def set_midi_channel(_sequence, channel) do
-    raise Error, "Bad MIDI channel: #{channel}"
-  end
+    unless :code.module_status(channel_module) == :loaded do
+      defmodule channel_module do
+        alias Midifile.Event
+        @new_channel new_channel
 
-  defp set_track_midi_channel(tracks, channel) when is_list(tracks),
-    do: Enum.map(tracks, &set_track_midi_channel(&1, channel))
+        def preview_events(_), do: []
 
-  defp set_track_midi_channel(%Track{} = track, channel) do
-    %{track | events: set_event_midi_channel(track.events, channel)}
-  end
-
-  defp set_event_midi_channel(events, channel) when is_list(events),
-    do: Enum.map(events, &set_event_midi_channel(&1, channel))
-
-  defp set_event_midi_channel(%Event{} = event, new_channel) do
-    if Event.channel?(event) do
-      [first | rest] = event.bytes
-      orig_channel = Event.channel(event)
-      first = first - orig_channel + new_channel
-      struct(event, bytes: [first | rest])
-    else
-      event
+        def process_event(event) do
+          if Event.channel?(event) do
+            [first | rest] = event.bytes
+            orig_channel = Event.channel(event)
+            first = first - orig_channel + @new_channel
+            struct(event, bytes: [first | rest])
+          else
+            event
+          end
+        end
+      end
     end
+
+    channel_module
+  end
+
+  def make_processor(channel) do
+    raise Error, "Bad MIDI channel: #{channel}"
   end
 end
