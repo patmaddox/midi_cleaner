@@ -18,7 +18,8 @@ defmodule MidiCleaner.FileList do
     dirs_stream = Stream.flat_map(dirs, &list_files/1)
 
     Stream.concat(files_stream, dirs_stream)
-    |> Enum.each(func)
+    |> Task.async_stream(func)
+    |> Stream.run()
   end
 
   defp list_files(dir) do
