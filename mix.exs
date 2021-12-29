@@ -24,7 +24,8 @@ defmodule MidiCleaner.MixProject do
   defp deps do
     [
       {:midifile, git: "https://github.com/jimm/elixir-midifile.git", ref: "7eac20c"},
-      {:mox, "~> 1.0", only: :test}
+      {:mox, "~> 1.0", only: :test},
+      {:telemetry, "~> 1.0"}
     ]
   end
 

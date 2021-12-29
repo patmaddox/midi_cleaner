@@ -47,14 +47,22 @@ defmodule MidiCleaner.FileProcessor do
     {:reply, :ok, state}
   end
 
-  defp read_file(filename), do: midi_cleaner().read_file(filename)
+  defp read_file(filename) do
+    record_time(:read_file, fn -> midi_cleaner().read_file(filename) end)
+  end
 
   defp process(sequence, %{processors: processors}) do
-    midi_cleaner().process(sequence, processors)
+    record_time(:process, fn -> midi_cleaner().process(sequence, processors) end)
   end
 
   defp write_file(sequence, filename, config) do
-    filename = Enum.join([config.output, filename], "/")
-    midi_cleaner().write_file(sequence, filename)
+    record_time(:write_file, fn ->
+      filename = Enum.join([config.output, filename], "/")
+      midi_cleaner().write_file(sequence, filename)
+    end)
+  end
+
+  defp record_time(event, func) do
+    MidiCleaner.record_time([:file_processor, event], func)
   end
 end

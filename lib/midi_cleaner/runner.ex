@@ -5,14 +5,18 @@ defmodule MidiCleaner.Runner do
 
   import MidiCleaner, only: [midi_cleaner: 0, file_processor: 0]
 
-  alias MidiCleaner.{Config, FileList}
+  alias MidiCleaner.{Config, FileList, StatsServer}
 
   def new(config), do: GenServer.start_link(__MODULE__, config)
 
   def run(%Config{} = config) do
-    {:ok, pid} = new(config)
-    :ok = run(pid, :infinity)
-    :ok = GenServer.stop(pid)
+    record_time(:run, fn ->
+      {:ok, pid} = new(config)
+      :ok = run(pid, :infinity)
+      :ok = GenServer.stop(pid)
+    end)
+
+    StatsServer.inspect()
   end
 
   def run(pid, timeout \\ 5000), do: GenServer.call(pid, :run, timeout)
@@ -32,8 +36,11 @@ defmodule MidiCleaner.Runner do
 
   defp process_files(%{file_list: file_list, output: output} = config) do
     FileList.each_file(file_list, fn {infile, outfile} ->
-      make_output_dir(outfile, output)
-      :ok = file_processor().process_file(config, infile, outfile)
+      record_time(:make_output_dir, fn -> make_output_dir(outfile, output) end)
+
+      record_time(:process_file, fn ->
+        :ok = file_processor().process_file(config, infile, outfile)
+      end)
     end)
   end
 
@@ -44,5 +51,9 @@ defmodule MidiCleaner.Runner do
 
     Path.join(output, parent_dir)
     |> midi_cleaner().make_dir()
+  end
+
+  def record_time(event, func) do
+    MidiCleaner.record_time([:runner, event], func)
   end
 end

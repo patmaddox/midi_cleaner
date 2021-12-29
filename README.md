@@ -29,6 +29,7 @@ Computers refer to MIDI channels 0-15, and MidiCleaner currently uses this conve
 
 ## TODO
 
+* Replace StatsServer with Telemetry.Metrics
 * Update typespecs (?) in @callback definitions
 * Review expected vs actual convention in ExUnit
 * Report results

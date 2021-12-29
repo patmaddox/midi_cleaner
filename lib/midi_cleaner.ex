@@ -16,6 +16,16 @@ defmodule MidiCleaner do
 
   def make_dir(dir), do: DirTree.mkdir_p(dir)
 
+  def record_time(event, func) do
+    :telemetry.span(
+      [:midi_cleaner | event],
+      %{},
+      fn ->
+        {func.(), %{}}
+      end
+    )
+  end
+
   def midi_cleaner(), do: Application.get_env(:midi_cleaner, :midi_cleaner)
 
   def file_processor(), do: Application.get_env(:midi_cleaner, :file_processor)
