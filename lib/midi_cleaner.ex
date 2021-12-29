@@ -46,9 +46,9 @@ defmodule MidiCleaner do
 
     events =
       events
-      |> Task.async_stream(&process_event(&1, processors))
-      |> Stream.reject(fn {:ok, event} -> event == :drop end)
-      |> Enum.map(fn {:ok, event} -> event end)
+      |> Stream.map(&process_event(&1, processors))
+      |> Stream.reject(& &1 == :drop)
+      |> Enum.map(& &1)
 
     %{track | events: events}
   end

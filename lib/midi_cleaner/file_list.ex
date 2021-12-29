@@ -24,7 +24,6 @@ defmodule MidiCleaner.FileList do
 
   defp list_files(dir) do
     Path.wildcard("#{dir}/**/*.mid")
-    |> Task.async_stream(&{&1, Path.relative_to(&1, dir)}, ordered: false)
-    |> Stream.map(fn {:ok, file} -> file end)
+    |> Stream.map(&{&1, Path.relative_to(&1, dir)})
   end
 end
