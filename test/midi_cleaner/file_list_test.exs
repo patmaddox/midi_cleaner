@@ -6,7 +6,7 @@ defmodule MidiCleaner.FileListTest do
 
   describe "files()" do
     test "list of midi files" do
-      files = FileList.new(["1.mid", "2.mid"]) |> FileList.files()
+      files = FileList.new(["1.mid", "2.mid"]) |> FileList.files() |> Enum.map(& &1)
 
       assert files == [
                {"1.mid", "1.mid"},
@@ -15,7 +15,7 @@ defmodule MidiCleaner.FileListTest do
     end
 
     test "dir" do
-      files = FileList.new(["test/fixtures"]) |> FileList.files()
+      files = FileList.new(["test/fixtures"]) |> FileList.files() |> Enum.map(& &1)
 
       assert files == [
                {"test/fixtures/midi/drums.mid", "midi/drums.mid"},
@@ -24,7 +24,7 @@ defmodule MidiCleaner.FileListTest do
     end
 
     test "files and dirs mixed" do
-      files = FileList.new(["1.mid", "2.mid", "test/fixtures"]) |> FileList.files()
+      files = FileList.new(["1.mid", "2.mid", "test/fixtures"]) |> FileList.files() |> Enum.map(& &1)
 
       assert files == [
                {"1.mid", "1.mid"},
